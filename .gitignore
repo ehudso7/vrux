@@ -41,3 +41,13 @@ yarn-error.log*
 next-env.d.ts
 .env.local
 .env
+
+# Cursor IDE
+.cursor/
+
+# Logs
+logs/
+server.log
+
+# Environment files
+.env.docker
