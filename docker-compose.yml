@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  vrux:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vrux-app
+    ports:
+      - "3000:3000"
+    environment:
+      # Core Configuration
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      
+      # AI Providers - Replace with your actual keys
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-proj-your-openai-key-here}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-your-anthropic-key-here}
+      
+      # Feature Flags
+      NEXT_PUBLIC_ENABLE_VIEWCOMFY: "false"
+      NEXT_PUBLIC_ENABLE_CACHE: "true"
+      NEXT_PUBLIC_ENABLE_QUALITY_CHECKS: "true"
+      
+      # Rate Limiting
+      RATE_LIMIT_WINDOW_MS: "60000"
+      RATE_LIMIT_MAX_REQUESTS: "10"
+      
+      # Performance
+      MAX_GENERATION_TIME_MS: "30000"
+      MAX_TOKENS: "2000"
+      
+      # Logging
+      LOG_LEVEL: "info"
+      LOG_FILE_PATH: "logs/app.log"
+      
+      # CORS
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+      
+    volumes:
+      # Mount logs directory for debugging
+      - ./logs:/app/logs
+      
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+# Optional: Add Redis for production rate limiting
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: vrux-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+
+# volumes:
+#   redis-data:

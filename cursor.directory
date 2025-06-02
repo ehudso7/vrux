@@ -1,0 +1,49 @@
+# VRUX - AI UI Generator
+
+## Project Overview
+VRUX is a production-ready AI-powered UI component generator built with Next.js, React, and OpenAI GPT-4.
+
+## Key Technologies
+- Next.js 15.3 (Pages Router)
+- React 19
+- Tailwind CSS 4.0
+- OpenAI API (GPT-4)
+- React Live (component preview)
+- TypeScript support
+
+## Project Structure
+```
+/components       # React components
+  /ui            # Reusable UI primitives
+/pages           # Next.js pages and API routes
+  /api           # Backend API endpoints
+/lib             # Utilities and helpers
+/public          # Static assets
+```
+
+## Development Focus Areas
+1. **AI Integration**: Enhancing prompt engineering and response parsing
+2. **Preview System**: Improving the live component preview with React Live
+3. **UI/UX**: Creating intuitive interfaces for component generation
+4. **Performance**: Optimizing API calls and component rendering
+5. **Security**: Rate limiting and input validation
+
+## Common Tasks
+- Adding new example prompts
+- Improving AI response quality
+- Enhancing preview capabilities
+- Adding export formats
+- Implementing new UI components
+
+## API Endpoints
+- `POST /api/generate-ui`: Generate React components from prompts
+
+## Environment Setup
+Requires `OPENAI_API_KEY` in `.env.local`
+
+## Best Practices
+- Follow existing component patterns
+- Use Tailwind CSS for styling
+- Implement proper error handling
+- Keep components modular and reusable
+- Test AI outputs thoroughly

@@ -1,0 +1,15 @@
+# VRUX Robots.txt
+# https://www.robotstxt.org/robotstxt.html
+
+# Allow all robots
+User-agent: *
+Allow: /
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://vrux.app/sitemap.xml
+
+# Crawl delay (in seconds) - be nice to search engines
+Crawl-delay: 1

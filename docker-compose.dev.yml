@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  vrux-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: vrux-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Core Configuration
+      NODE_ENV: development
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      
+      # AI Providers - Use your actual keys or leave empty for mock provider
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      
+      # Feature Flags
+      NEXT_PUBLIC_ENABLE_VIEWCOMFY: "false"
+      NEXT_PUBLIC_ENABLE_CACHE: "true"
+      NEXT_PUBLIC_ENABLE_QUALITY_CHECKS: "true"
+      
+      # Rate Limiting (more generous for development)
+      RATE_LIMIT_WINDOW_MS: "60000"
+      RATE_LIMIT_MAX_REQUESTS: "100"
+      
+      # Performance
+      MAX_GENERATION_TIME_MS: "30000"
+      MAX_TOKENS: "2000"
+      
+      # Logging
+      LOG_LEVEL: "debug"
+      LOG_FILE_PATH: "logs/app.log"
+      
+      # CORS (allow all in development)
+      CORS_ALLOWED_ORIGINS: "*"
+      
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+      
+    restart: unless-stopped
+    
+    command: npm run dev
