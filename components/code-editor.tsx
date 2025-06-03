@@ -173,7 +173,7 @@ export default function CodeEditor({
               padding: { top: 16, bottom: 16 },
               smoothScrolling: true,
               cursorBlinking: 'smooth',
-              cursorSmoothCaretAnimation: true,
+              cursorSmoothCaretAnimation: 'on',
               fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
               fontLigatures: true,
               renderLineHighlight: 'all',
