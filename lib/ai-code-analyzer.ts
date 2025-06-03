@@ -1,5 +1,5 @@
 import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
+import traverse, { NodePath } from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
 
@@ -153,12 +153,12 @@ export function analyzeCode(code: string): CodeAnalysis {
   return analysis;
 }
 
-function analyzeComponent(path: NodePath, name: string, analysis: CodeAnalysis) {
+function analyzeComponent(path: NodePath<t.Node>, name: string, analysis: CodeAnalysis) {
   let hasState = false;
   let hasEffects = false;
   let complexity = 0;
 
-  traverse(path.node, {
+  path.traverse({
     CallExpression(innerPath) {
       if (t.isIdentifier(innerPath.node.callee)) {
         const hookName = innerPath.node.callee.name;
@@ -170,7 +170,7 @@ function analyzeComponent(path: NodePath, name: string, analysis: CodeAnalysis) 
     JSXElement() {
       complexity++;
     }
-  }, path.scope, path);
+  });
 
   analysis.components.push({
     name,
@@ -181,7 +181,7 @@ function analyzeComponent(path: NodePath, name: string, analysis: CodeAnalysis) 
   });
 }
 
-function analyzeHook(path: NodePath, name: string, analysis: CodeAnalysis) {
+function analyzeHook(path: NodePath<t.Node>, name: string, analysis: CodeAnalysis) {
   const hook: HookInfo = {
     name,
     line: path.node.loc?.start.line || 0
@@ -200,7 +200,7 @@ function analyzeHook(path: NodePath, name: string, analysis: CodeAnalysis) {
   analysis.hooks.push(hook);
 }
 
-function analyzeState(path: NodePath, analysis: CodeAnalysis) {
+function analyzeState(path: NodePath<t.Node>, analysis: CodeAnalysis) {
   if (path.parent && t.isVariableDeclarator(path.parent) && t.isCallExpression(path.node)) {
     const id = path.parent.id;
     if (t.isArrayPattern(id) && id.elements.length > 0) {
@@ -217,7 +217,7 @@ function analyzeState(path: NodePath, analysis: CodeAnalysis) {
   }
 }
 
-function analyzeEventHandler(path: NodePath, event: string, analysis: CodeAnalysis) {
+function analyzeEventHandler(path: NodePath<t.Node>, event: string, analysis: CodeAnalysis) {
   if (!t.isJSXAttribute(path.node)) return;
   
   const value = path.node.value;
@@ -229,7 +229,7 @@ function analyzeEventHandler(path: NodePath, event: string, analysis: CodeAnalys
       CallExpression() { complexity++; },
       ConditionalExpression() { complexity += 2; },
       LogicalExpression() { complexity++; }
-    }, path.scope, path);
+    });
   }
 
   analysis.eventHandlers.push({

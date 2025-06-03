@@ -5,6 +5,8 @@ declare module '@babel/traverse' {
     node: T;
     parent: Node;
     type: string;
+    scope: any;
+    loc: any;
     isIdentifier(): boolean;
     isCallExpression(): boolean;
     isMemberExpression(): boolean;
@@ -16,7 +18,13 @@ declare module '@babel/traverse' {
     traverse(visitor: any): void;
   }
   
-  export default function traverse(ast: Node, visitor: any): void;
+  export interface TraverseOptions {
+    scope?: any;
+    state?: any;
+    parentPath?: NodePath;
+  }
+  
+  export default function traverse(ast: Node, visitor: any, scope?: any, state?: any, parentPath?: NodePath): void;
 }
 
 declare module '@babel/generator' {

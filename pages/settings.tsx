@@ -467,12 +467,12 @@ export default function Settings() {
                         Current Plan: {user.plan || 'Free'}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {user.plan === 'Pro' 
+                        {user.plan === 'pro' 
                           ? 'Unlimited generations per month'
                           : '100 generations per month'
                         }
                       </p>
-                      {user.plan !== 'Pro' && (
+                      {user.plan !== 'pro' && (
                         <Link href="/pricing">
                           <a className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                             Upgrade to Pro
