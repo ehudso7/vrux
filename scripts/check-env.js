@@ -22,22 +22,29 @@ const OPTIONAL_ENV_VARS = [
   'MAX_GENERATION_TIME_MS',
   'MAX_TOKENS',
   'LOG_LEVEL',
-  'LOG_FILE_PATH'
+  'LOG_FILE_PATH',
+  'SESSION_SECRET'
 ];
 
 console.log('🔍 Checking environment variables...\n');
 
-// Check if .env.local exists
-const envPath = path.join(process.cwd(), '.env.local');
-if (!fs.existsSync(envPath)) {
-  console.error('❌ .env.local file not found!');
-  console.log('📝 Please create a .env.local file based on .env.example');
-  console.log('   Run: cp .env.example .env.local');
-  process.exit(1);
-}
+// Check if we're in Vercel/production environment
+const isVercel = process.env.VERCEL || process.env.CI;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Load environment variables
-require('dotenv').config({ path: envPath });
+if (!isVercel && !isProduction) {
+  // Only check for .env.local in development
+  const envPath = path.join(process.cwd(), '.env.local');
+  if (!fs.existsSync(envPath)) {
+    console.error('❌ .env.local file not found!');
+    console.log('📝 Please create a .env.local file based on .env.example');
+    console.log('   Run: cp .env.example .env.local');
+    process.exit(1);
+  }
+  
+  // Load environment variables from .env.local in development
+  require('dotenv').config({ path: envPath });
+}
 
 let hasErrors = false;
 
@@ -46,7 +53,10 @@ console.log('📋 Required Variables:');
 REQUIRED_ENV_VARS.forEach(varName => {
   if (process.env[varName]) {
     const value = process.env[varName];
-    const masked = value.substring(0, 10) + '...' + value.substring(value.length - 4);
+    // Mask the value for security
+    const masked = value.length > 14 
+      ? value.substring(0, 10) + '...' + value.substring(value.length - 4)
+      : '***';
     console.log(`✅ ${varName}: ${masked}`);
   } else {
     console.error(`❌ ${varName}: NOT SET`);
@@ -57,7 +67,11 @@ REQUIRED_ENV_VARS.forEach(varName => {
 console.log('\n📋 Optional Variables:');
 OPTIONAL_ENV_VARS.forEach(varName => {
   if (process.env[varName]) {
-    console.log(`✅ ${varName}: ${process.env[varName]}`);
+    // Don't show full values for sensitive data
+    const value = varName.includes('SECRET') || varName.includes('KEY') 
+      ? '***' 
+      : process.env[varName];
+    console.log(`✅ ${varName}: ${value}`);
   } else {
     console.log(`⚠️  ${varName}: NOT SET (optional)`);
   }
@@ -81,7 +95,11 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.includes('xxx')) {
 
 if (hasErrors) {
   console.log('\n❌ Environment check failed! Please fix the issues above.');
+  if (isVercel) {
+    console.log('\n📝 In Vercel: Add environment variables in Settings → Environment Variables');
+  }
   process.exit(1);
 } else {
   console.log('\n✅ All required environment variables are set!');
+  console.log(`🚀 Running in ${isProduction ? 'production' : 'development'} mode`);
 }
