@@ -3,16 +3,12 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
-  Book,
   Code2,
   Sparkles,
   FileText,
   Terminal,
   Palette,
   Layers,
-  Settings,
-  Shield,
-  Zap,
   Search,
   ChevronRight,
   ExternalLink,

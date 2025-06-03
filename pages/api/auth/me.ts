@@ -39,7 +39,7 @@ export default async function handler(
       apiCalls: user.apiCalls,
       maxApiCalls: user.maxApiCalls,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Internal server error' });
   }
 }

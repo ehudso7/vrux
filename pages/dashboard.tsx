@@ -14,7 +14,6 @@ import {
   Clock,
   TrendingUp,
   FileCode,
-  Users,
   CreditCard
 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
@@ -93,7 +92,7 @@ export default function Dashboard() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Here's an overview of your account and recent activity
+              Here&apos;s an overview of your account and recent activity
             </p>
           </div>
 

@@ -111,7 +111,7 @@ async function generateUIHandler(
           try {
             provider = anthropicProvider;
             code = await provider.generateComponent(prompt, systemPrompt);
-          } catch (anthropicError) {
+          } catch {
             // If Anthropic also fails, use mock
             logger.warn('Anthropic also failed, using mock provider');
             provider = mockProvider;

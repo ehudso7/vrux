@@ -32,7 +32,7 @@ export default async function handler(
 
     // Update user
     const { name, email } = req.body;
-    const updates: any = {};
+    const updates: Record<string, string> = {};
 
     if (name && name !== user.name) {
       updates.name = name;
