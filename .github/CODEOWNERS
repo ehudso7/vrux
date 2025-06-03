@@ -1,0 +1,22 @@
+# This is a CODEOWNERS file
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @ehudso7
+
+# Frontend components
+/components/ @ehudso7
+/pages/ @ehudso7
+
+# API and backend
+/pages/api/ @ehudso7
+/lib/ @ehudso7
+
+# Documentation
+/docs/ @ehudso7
+*.md @ehudso7
+
+# Configuration files
+/.github/ @ehudso7
+/package.json @ehudso7
+/tsconfig.json @ehudso7

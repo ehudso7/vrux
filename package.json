@@ -1,7 +1,34 @@
 {
   "name": "vrux",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered React component generator with live preview and Tailwind CSS styling",
+  "keywords": [
+    "react",
+    "component-generator",
+    "ai",
+    "tailwind",
+    "ui",
+    "nextjs",
+    "typescript"
+  ],
+  "author": {
+    "name": "VRUX Team",
+    "email": "support@vrux.app"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ehudso7/vrux.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ehudso7/vrux/issues"
+  },
+  "homepage": "https://vrux.app",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -9,7 +36,12 @@
     "lint": "next lint",
     "check-env": "node scripts/check-env.js",
     "predev": "npm run check-env",
-    "prebuild": "npm run check-env"
+    "prebuild": "npm run check-env",
+    "test": "echo \"Tests coming soon\" && exit 0",
+    "test:ci": "npm test",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "prepare": "echo 'Setup complete'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
