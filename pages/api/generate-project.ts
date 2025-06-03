@@ -5,9 +5,8 @@ import {
   ProjectGenerationSchema,
   generateProjectStructure
 } from '@/lib/project-manager';
-// import withErrorHandler from '@/lib/error-handler';
-// import { sanitizeCode } from '@/lib/ai-validation';
-// import limiter from '@/lib/rate-limiter';
+import { sanitizeGeneratedCode } from '@/lib/ai-validation';
+import limiter from '@/lib/rate-limiter';
 import logger from '@/lib/logger';
 
 const openai = new OpenAI({
@@ -38,19 +37,32 @@ async function generateComponent(prompt: string): Promise<string> {
   });
 
   const code = response.choices[0]?.message?.content || '';
-  return code; // sanitizeCode(code);
+  return sanitizeGeneratedCode(code);
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // Rate limiting
-  // const limited = await limiter.check(req, res);
-  // if (limited) {
-  //   return res.status(429).json({ error: 'Too many requests. Please try again later.' });
-  // }
+  const identifier = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'anonymous';
+  if (!limiter.isAllowed(identifier)) {
+    return res.status(429).json({ 
+      error: 'Too many requests. Please try again later.',
+      remainingRequests: limiter.getRemainingRequests(identifier),
+      resetTime: limiter.getResetTime(identifier) 
+    });
+  }
 
   try {
     const config = ProjectGenerationSchema.parse(req.body);

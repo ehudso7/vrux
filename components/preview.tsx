@@ -16,12 +16,10 @@ const scope = {
 
 export default function Preview({ code }: PreviewProps) {
   const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Better code wrapping logic with error handling
   const processedCode = useMemo(() => {
     if (!code || code.trim() === '') {
-      setError(null);
       return '';
     }
     
@@ -42,34 +40,38 @@ export default function Preview({ code }: PreviewProps) {
         }
       }
     
-    // Check if it's already a complete component
-    const hasExport = cleanCode.includes('export default');
-    const hasFunction = cleanCode.includes('function') && cleanCode.includes('return');
-    const hasArrowFunction = cleanCode.includes('=>') && cleanCode.includes('return');
-    const hasReturnStatement = cleanCode.includes('return');
-    
-    // If it looks like a complete component, use it as is
-    if (hasExport || (hasFunction && hasReturnStatement) || (hasArrowFunction && hasReturnStatement)) {
-      // Ensure it has an export default
-      if (!hasExport) {
-        // Try to find the component name
-        const functionMatch = cleanCode.match(/(?:function|const)\s+(\w+)/);
-        if (functionMatch) {
-          cleanCode = `${cleanCode}\n\nexport default ${functionMatch[1]};`;
-        } else {
-          // Wrap in a default export
-          cleanCode = `const Component = ${cleanCode};\nexport default Component;`;
+      // Check if it's already a complete component
+      const hasExport = cleanCode.includes('export default');
+      const hasFunction = cleanCode.includes('function') && cleanCode.includes('return');
+      const hasArrowFunction = cleanCode.includes('=>') && cleanCode.includes('return');
+      const hasReturnStatement = cleanCode.includes('return');
+      
+      // If it looks like a complete component, use it as is
+      if (hasExport || (hasFunction && hasReturnStatement) || (hasArrowFunction && hasReturnStatement)) {
+        // Ensure it has an export default
+        if (!hasExport) {
+          // Try to find the component name
+          const functionMatch = cleanCode.match(/(?:function|const)\s+(\w+)/);
+          if (functionMatch) {
+            cleanCode = `${cleanCode}\n\nexport default ${functionMatch[1]};`;
+          } else {
+            // Wrap in a default export
+            cleanCode = `const Component = ${cleanCode};\nexport default Component;`;
+          }
         }
+        return cleanCode;
       }
-      return cleanCode;
-    }
-    
-    // Otherwise, wrap it as JSX
-    return `export default function Component() {
+      
+      // Otherwise, wrap it as JSX
+      return `export default function Component() {
   return (
     ${cleanCode}
   );
 }`;
+    } catch (err) {
+      console.error('Error processing code:', err);
+      return '';
+    }
   }, [code]);
 
   useEffect(() => {

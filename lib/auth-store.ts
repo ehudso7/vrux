@@ -61,7 +61,7 @@ class AuthStore {
   }
 
   findUserById(id: string): StoredUser | null {
-    for (const user of this.users.values()) {
+    for (const user of Array.from(this.users.values())) {
       if (user.id === id) {
         return user;
       }
@@ -124,7 +124,7 @@ class AuthStore {
 
   private cleanupSessions(): void {
     const now = new Date();
-    for (const [sessionId, session] of this.sessions.entries()) {
+    for (const [sessionId, session] of Array.from(this.sessions.entries())) {
       if (now > session.expiresAt) {
         this.sessions.delete(sessionId);
       }

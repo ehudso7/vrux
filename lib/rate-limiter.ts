@@ -17,7 +17,7 @@ class RateLimiter {
    */
   private cleanup(): void {
     const now = Date.now();
-    for (const [key, timestamps] of this.requests.entries()) {
+    for (const [key, timestamps] of Array.from(this.requests.entries())) {
       const validTimestamps = timestamps.filter(ts => now - ts < this.windowMs);
       if (validTimestamps.length === 0) {
         this.requests.delete(key);

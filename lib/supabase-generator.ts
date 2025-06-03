@@ -248,7 +248,7 @@ export function parseSchemaFromPrompt(prompt: string): TableDefinition[] {
   const tableNames = new Set<string>();
   tablePatterns.forEach(pattern => {
     const matches = prompt.matchAll(pattern);
-    for (const match of matches) {
+    for (const match of Array.from(matches)) {
       tableNames.add(match[1].toLowerCase());
     }
   });
