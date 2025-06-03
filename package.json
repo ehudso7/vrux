@@ -36,7 +36,6 @@
     "lint": "next lint",
     "check-env": "node scripts/check-env.js",
     "predev": "npm run check-env",
-    "prebuild": "npm run check-env",
     "test": "echo \"Tests coming soon\" && exit 0",
     "test:ci": "npm test",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
