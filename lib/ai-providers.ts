@@ -146,11 +146,14 @@ export const mockProvider: AIProvider = {
 }`;
     }
     
-    return `() => {
+    return `export default function GeneratedComponent() {
   return (
     <div className="p-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-2xl">
       <h1 className="text-3xl font-bold text-white mb-4">Generated Component</h1>
-      <p className="text-white/90">This is a mock component. Both OpenAI and Anthropic APIs are unavailable.</p>
+      <p className="text-white/90">This is a mock component for demonstration purposes.</p>
+      <div className="mt-4 p-4 bg-white/10 rounded-lg">
+        <p className="text-white/80 text-sm">Your prompt: "${prompt.substring(0, 60)}..."</p>
+      </div>
     </div>
   );
 }`;

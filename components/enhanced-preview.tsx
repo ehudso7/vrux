@@ -58,6 +58,9 @@ export default function EnhancedPreview({ code, variant = 0, onElementClick }: E
     useState: React.useState,
     useEffect: React.useEffect,
     useRef: React.useRef,
+    useCallback: React.useCallback,
+    useMemo: React.useMemo,
+    Fragment: React.Fragment,
     ...FramerMotion,
   };
 

@@ -16,16 +16,31 @@ const scope = {
 
 export default function Preview({ code }: PreviewProps) {
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Better code wrapping logic
+  // Better code wrapping logic with error handling
   const processedCode = useMemo(() => {
-    if (!code) return '';
+    if (!code || code.trim() === '') {
+      setError(null);
+      return '';
+    }
     
-    // Clean the code first
-    let cleanCode = code.trim();
-    
-    // Remove any surrounding backticks or markdown
-    cleanCode = cleanCode.replace(/^```[a-z]*\n?|\n?```$/gi, '');
+    try {
+      // Clean the code first
+      let cleanCode = code.trim();
+      
+      // Remove any surrounding backticks or markdown
+      cleanCode = cleanCode.replace(/^```[a-z]*\n?|\n?```$/gi, '');
+      
+      // Fix common syntax errors
+      // Remove trailing ')' that might cause issues
+      if (cleanCode.endsWith(')') && !cleanCode.endsWith('();') && !cleanCode.endsWith(');')) {
+        const openCount = (cleanCode.match(/\(/g) || []).length;
+        const closeCount = (cleanCode.match(/\)/g) || []).length;
+        if (closeCount > openCount) {
+          cleanCode = cleanCode.slice(0, -1);
+        }
+      }
     
     // Check if it's already a complete component
     const hasExport = cleanCode.includes('export default');

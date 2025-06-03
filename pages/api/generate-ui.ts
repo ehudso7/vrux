@@ -211,13 +211,14 @@ async function generateUIHandler(
       requestId: req.id,
       promptLength: prompt.length,
       responseLength: cleanedCode.length,
-      model: 'gpt-4o',
+      model: provider.name,
       tokensUsed: 0,
       generationTime: generationTime ? `${generationTime.toFixed(2)}ms` : 'unknown'
     });
 
     res.status(200).json({ 
       code: finalCode,
+      provider: provider.name,
       usage: {
         prompt_tokens: 0,
         completion_tokens: 0,
