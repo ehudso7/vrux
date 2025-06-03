@@ -626,8 +626,7 @@ export default function IntelligentChatInterface({
                   value={currentCode}
                   options={{
                     readOnly: true,
-                    minimap: { enabled: false },
-                    diffEditor: true
+                    minimap: { enabled: false }
                   }}
                 />
               </div>
