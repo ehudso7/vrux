@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
@@ -7,7 +6,6 @@ import { Sparkles, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 
 export default function SignIn() {
-  const router = useRouter();
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -133,7 +131,7 @@ export default function SignIn() {
             </form>
 
             <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-purple-600 hover:text-purple-700 font-medium">
                 Sign up
               </Link>

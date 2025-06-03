@@ -7,17 +7,14 @@ import { toast } from 'react-hot-toast';
 import { 
   ArrowLeft,
   User,
-  Mail,
   Bell,
   Shield,
   CreditCard,
   Palette,
   Code,
-  Download,
   Trash2,
   Save,
-  Check,
-  X
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 
@@ -67,7 +64,7 @@ export default function Settings() {
         email: formData.email
       });
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update profile');
     } finally {
       setLoading(false);
@@ -97,7 +94,7 @@ export default function Settings() {
         newPassword: '',
         confirmPassword: ''
       }));
-    } catch (error) {
+    } catch {
       toast.error('Failed to update password');
     } finally {
       setLoading(false);
@@ -114,7 +111,7 @@ export default function Settings() {
       await signOut();
       toast.success('Account deleted successfully');
       router.push('/');
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete account');
     }
   };

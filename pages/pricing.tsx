@@ -7,12 +7,6 @@ import {
   Check, 
   X, 
   Sparkles, 
-  Zap, 
-  Shield, 
-  Code2,
-  Users,
-  HeadphonesIcon,
-  Infinity,
   ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
@@ -278,7 +272,7 @@ export default function Pricing() {
                   Can I cancel my subscription anytime?
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
+                  Yes, you can cancel your subscription at any time. You&apos;ll continue to have access until the end of your billing period.
                 </p>
               </div>
 
@@ -287,7 +281,7 @@ export default function Pricing() {
                   Do you offer refunds?
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  We offer a 14-day money-back guarantee. If you're not satisfied, contact us for a full refund.
+                  We offer a 14-day money-back guarantee. If you&apos;re not satisfied, contact us for a full refund.
                 </p>
               </div>
 
