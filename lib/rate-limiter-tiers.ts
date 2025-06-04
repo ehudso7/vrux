@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { RateLimiter } from './rate-limiter';
 import logger from './logger';
 
@@ -228,7 +229,19 @@ export class TieredRateLimiter {
     const globalLimiter = this.getLimiter(userId, planLimits.requests, planLimits.window);
     const globalRequests = globalLimiter.getRequests(userId);
     
-    const result: any = {
+    interface UsageResult {
+      plan: UserPlan;
+      globalLimit: number;
+      globalUsed: number;
+      globalRemaining: number;
+      globalResetTime: Date;
+      endpointLimit?: number;
+      endpointUsed?: number;
+      endpointRemaining?: number;
+      endpointResetTime?: Date;
+    }
+    
+    const result: UsageResult = {
       plan: userPlan,
       globalLimit: planLimits.requests,
       globalUsed: globalRequests.length,
@@ -281,10 +294,10 @@ export const tieredRateLimiter = new TieredRateLimiter();
  * Middleware for tiered rate limiting
  */
 export function requireRateLimit(endpoint?: string) {
-  return (req: any, res: any, next?: any) => {
-    const userId = req.userId || req.headers['x-user-id'] || req.ip;
-    const userPlan = req.user?.plan || UserPlan.FREE;
-    const customRateLimit = req.apiKey?.rateLimit;
+  return (req: NextApiRequest, res: NextApiResponse, next?: () => void) => {
+    const userId = (req as any).userId || (req.headers['x-user-id'] as string) || req.socket?.remoteAddress;
+    const userPlan = (req as any).user?.plan || UserPlan.FREE;
+    const customRateLimit = (req as any).apiKey?.rateLimit;
     
     const result = tieredRateLimiter.isAllowed(
       userId,

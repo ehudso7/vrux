@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
 import logger from './logger';
 
 /**
@@ -252,14 +253,14 @@ export function requireGeoAccess(customConfig?: Partial<GeoRestrictionConfig>) {
     ? new GeoRestrictionManager(customConfig)
     : geoRestrictionManager;
   
-  return (req: any, res: any, next?: any) => {
+  return (req: NextApiRequest, res: NextApiResponse, next?: () => void) => {
     const geoInfo = manager.getGeoInfo(req.headers);
     
     if (!geoInfo.country) {
       // Can't determine country - apply default policy
       if (!manager['config'].defaultAllow) {
         logger.warn('Geographic restriction - unknown country', {
-          ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+          ip: (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress,
           headers: req.headers,
         });
         
@@ -277,7 +278,7 @@ export function requireGeoAccess(customConfig?: Partial<GeoRestrictionConfig>) {
           country: geoInfo.country,
           region: geoInfo.region,
           reason: result.reason,
-          ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+          ip: (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress,
         });
         
         return res.status(451).json({ // 451 = Unavailable For Legal Reasons
@@ -290,7 +291,7 @@ export function requireGeoAccess(customConfig?: Partial<GeoRestrictionConfig>) {
     }
     
     // Attach geo info to request
-    req.geoInfo = geoInfo;
+    (req as any).geoInfo = geoInfo;
     
     if (next) {
       next();

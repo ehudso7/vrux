@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import logger from './logger';
 
 /**
@@ -206,7 +207,7 @@ export class ApiKeyManager {
    * Revoke an API key
    */
   revokeApiKey(keyId: string): boolean {
-    for (const [hashedKey, keyData] of this.keys.entries()) {
+    for (const [, keyData] of this.keys.entries()) {
       if (keyData.id === keyId) {
         keyData.revokedAt = new Date();
         logger.info('API key revoked', { keyId, userId: keyData.userId });
@@ -224,7 +225,7 @@ export class ApiKeyManager {
     
     for (const keyData of this.keys.values()) {
       if (keyData.userId === userId && !keyData.revokedAt) {
-        const { key, ...publicData } = keyData;
+        const { key: _, ...publicData } = keyData;
         userKeys.push(publicData);
       }
     }
@@ -270,8 +271,8 @@ export const apiKeyManager = new ApiKeyManager();
  * Express/Next.js middleware for API key validation
  */
 export function requireApiKey(permission?: ApiPermission) {
-  return (req: any, res: any, next?: any) => {
-    const apiKey = req.headers['x-api-key'] || req.query.api_key;
+  return (req: NextApiRequest, res: NextApiResponse, next?: () => void) => {
+    const apiKey = (req.headers['x-api-key'] as string) || (req.query.api_key as string);
     
     if (!apiKey) {
       return res.status(401).json({
@@ -285,7 +286,7 @@ export function requireApiKey(permission?: ApiPermission) {
     if (!validation.isValid) {
       logger.warn('Invalid API key attempt', {
         error: validation.error,
-        ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+        ip: (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress,
       });
       
       return res.status(403).json({
@@ -295,8 +296,8 @@ export function requireApiKey(permission?: ApiPermission) {
     }
     
     // Check IP allowlist
-    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
-    if (validation.apiKey && clientIp && !apiKeyManager.isIpAllowed(validation.apiKey, clientIp)) {
+    const clientIp = (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress || '127.0.0.1';
+    if (validation.apiKey && !apiKeyManager.isIpAllowed(validation.apiKey, clientIp)) {
       return res.status(403).json({
         error: 'IP address not allowed',
         code: 'IP_NOT_ALLOWED',
@@ -314,15 +315,15 @@ export function requireApiKey(permission?: ApiPermission) {
             code: 'DOMAIN_NOT_ALLOWED',
           });
         }
-      } catch (e) {
+      } catch {
         // Invalid origin URL
       }
     }
     
     // Attach user info to request
-    req.apiKey = validation.apiKey;
-    req.userId = validation.userId;
-    req.permissions = validation.permissions;
+    (req as any).apiKey = validation.apiKey;
+    (req as any).userId = validation.userId;
+    (req as any).permissions = validation.permissions;
     
     if (next) {
       next();
