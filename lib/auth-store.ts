@@ -25,7 +25,7 @@ class AuthStore {
   constructor() {
     // Create a demo user
     this.createUser({
-      email: 'demo@vrux.app',
+      email: 'demo@vrux.dev',
       password: 'demo123',
       name: 'Demo User',
     });

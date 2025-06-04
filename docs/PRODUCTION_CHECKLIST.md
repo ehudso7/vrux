@@ -87,7 +87,7 @@ This checklist ensures VRUX meets all production requirements as specified by th
 OPENAI_API_KEY=sk-...your-key...
 ANTHROPIC_API_KEY=sk-ant-...your-key...
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://vrux.app
+NEXT_PUBLIC_APP_URL=https://vrux.dev
 RATE_LIMIT_MAX_REQUESTS=20
 ```
 

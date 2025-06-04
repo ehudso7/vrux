@@ -5,6 +5,7 @@ import requestLogger from '../../lib/middleware/request-logger';
 import logger from '../../lib/logger';
 import performanceMonitor from '../../lib/performance';
 import { getAvailableProvider } from '../../lib/ai-providers';
+import { validateDomain } from '../../lib/domain-restriction';
 
 interface ExtendedNextApiRequest extends NextApiRequest {
   id?: string;
@@ -39,6 +40,25 @@ async function generateUIStreamHandler(
   req: ExtendedNextApiRequest,
   res: NextApiResponse
 ) {
+  // Validate domain
+  const domainValidation = validateDomain(req);
+  if (!domainValidation.isValid) {
+    logger.warn('Request blocked by domain restriction', {
+      reason: domainValidation.reason,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      host: req.headers.host,
+      url: req.url,
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    });
+    
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'This service can only be accessed from vrux.dev',
+      code: 'DOMAIN_RESTRICTION'
+    });
+  }
+
   // Run CORS middleware
   await runMiddleware(req, res, cors);
 

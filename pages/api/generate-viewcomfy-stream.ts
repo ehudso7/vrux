@@ -5,6 +5,7 @@ import cors, { runMiddleware } from '../../lib/cors'
 import logger from '../../lib/logger'
 import { createUIGenerationParams } from '../../lib/viewcomfy-utils'
 import type { ViewComfyGenerateRequest } from '../../lib/types'
+import { validateDomain } from '../../lib/domain-restriction'
 
 // Extend NextApiRequest to include custom properties
 interface ExtendedNextApiRequest extends NextApiRequest {
@@ -22,6 +23,26 @@ async function generateViewComfyStreamHandler(
 	req: ExtendedNextApiRequest,
 	res: NextApiResponse
 ) {
+	// Validate domain
+	const domainValidation = validateDomain(req)
+	if (!domainValidation.isValid) {
+		logger.warn('Request blocked by domain restriction', {
+			reason: domainValidation.reason,
+			origin: req.headers.origin,
+			referer: req.headers.referer,
+			host: req.headers.host,
+			url: req.url,
+			ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+		})
+		
+		return res.status(403).json({
+			success: false,
+			error: 'Forbidden',
+			message: 'This service can only be accessed from vrux.dev',
+			code: 'DOMAIN_RESTRICTION'
+		})
+	}
+
 	// Run CORS middleware
 	await runMiddleware(req, res, cors)
 

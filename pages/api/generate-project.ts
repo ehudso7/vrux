@@ -8,6 +8,7 @@ import {
 import { sanitizeGeneratedCode } from '@/lib/ai-validation';
 import limiter from '@/lib/rate-limiter';
 import logger from '@/lib/logger';
+import { validateDomain } from '@/lib/domain-restriction';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -41,6 +42,25 @@ async function generateComponent(prompt: string): Promise<string> {
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Validate domain
+  const domainValidation = validateDomain(req);
+  if (!domainValidation.isValid) {
+    logger.warn('Request blocked by domain restriction', {
+      reason: domainValidation.reason,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      host: req.headers.host,
+      url: req.url,
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    });
+    
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'This service can only be accessed from vrux.dev',
+      code: 'DOMAIN_RESTRICTION'
+    });
+  }
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

@@ -27,7 +27,7 @@ export default function SignIn() {
   };
 
   const handleDemoLogin = () => {
-    setEmail('demo@vrux.app');
+    setEmail('demo@vrux.dev');
     setPassword('demo123');
   };
 

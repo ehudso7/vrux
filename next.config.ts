@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: process.env.NODE_ENV === 'production'
-              ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.openai.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+              ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.openai.com https://vrux.dev wss://vrux.dev https://vercel.live; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
               : "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.openai.com http://localhost:*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
           },
           {
@@ -64,6 +64,28 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
     ]
+  },
+  
+  // Production domain validation
+  async rewrites() {
+    // Only allow the app to be accessed from vrux.dev in production
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        beforeFiles: [
+          {
+            source: '/:path*',
+            has: [
+              {
+                type: 'host',
+                value: '(?!vrux\\.dev$|www\\.vrux\\.dev$|.*\\.vercel\\.app$).*',
+              },
+            ],
+            destination: '/api/forbidden',
+          },
+        ],
+      };
+    }
+    return [];
   },
 };
 

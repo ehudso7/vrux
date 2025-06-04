@@ -89,7 +89,7 @@ export default function Pricing() {
       router.push('/dashboard');
     } else if (planName === 'Team') {
       // In a real app, this would open a contact form
-      alert('Please contact sales@vrux.app for Team pricing');
+      alert('Please contact sales@vrux.dev for Team pricing');
     } else {
       // In a real app, this would go to a checkout page
       router.push('/dashboard');

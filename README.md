@@ -218,7 +218,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@vrux.app
+- 📧 Email: support@vrux.dev
 - 💬 Discord: [Join our community](https://discord.gg/vrux)
 - 🐛 Issues: [GitHub Issues](https://github.com/yourusername/vrux/issues)
 

@@ -7,6 +7,7 @@ import performanceMonitor from '../../lib/performance';
 import type { GenerateUIResponse, GenerateUIError } from '../../lib/types';
 import { promptSchema, validateGeneratedComponent, securityHeaders } from '../../lib/ai-validation';
 import { getAvailableProvider } from '../../lib/ai-providers';
+import { validateDomain } from '../../lib/domain-restriction';
 
 // Extend NextApiRequest to include custom properties
 interface ExtendedNextApiRequest extends NextApiRequest {
@@ -41,6 +42,23 @@ async function generateUIHandler(
   req: ExtendedNextApiRequest,
   res: NextApiResponse<GenerateUIResponse | GenerateUIError>
 ) {
+  // Validate domain
+  const domainValidation = validateDomain(req);
+  if (!domainValidation.isValid) {
+    logger.warn('Request blocked by domain restriction', {
+      reason: domainValidation.reason,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      host: req.headers.host,
+      url: req.url,
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    });
+    
+    return res.status(403).json({
+      error: 'This service can only be accessed from vrux.dev'
+    } as GenerateUIError);
+  }
+
   // Run CORS middleware
   await runMiddleware(req, res, cors);
   

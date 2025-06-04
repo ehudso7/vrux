@@ -4,7 +4,7 @@ First off, thank you for considering contributing to VRUX! It's people like you 
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [VRUX Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [support@vrux.app](mailto:support@vrux.app).
+This project and everyone participating in it is governed by the [VRUX Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [support@vrux.dev](mailto:support@vrux.dev).
 
 ## How Can I Contribute?
 

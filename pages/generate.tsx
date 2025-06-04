@@ -85,7 +85,7 @@ const Generate: NextPage = () => {
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
                       <a 
-                        href="https://github.com/vrux/app" 
+                        href="https://github.com/ehudso7/vrux" 
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`p-2 rounded-lg ${

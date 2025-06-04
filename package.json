@@ -14,7 +14,7 @@
   ],
   "author": {
     "name": "VRUX Team",
-    "email": "support@vrux.app"
+    "email": "support@vrux.dev"
   },
   "license": "MIT",
   "repository": {
@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/ehudso7/vrux/issues"
   },
-  "homepage": "https://vrux.app",
+  "homepage": "https://vrux.dev",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"

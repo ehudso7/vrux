@@ -26,7 +26,7 @@ export default function ShareDialog({ open, onOpenChange, componentId }: ShareDi
   const [copied, setCopied] = useState(false);
   
   // Generate shareable URL (in production this would be a real URL)
-  const shareUrl = `https://vrux.app/share/${componentId}`;
+  const shareUrl = `https://vrux.dev/share/${componentId}`;
   const embedCode = `<iframe src="${shareUrl}/embed" width="100%" height="600" frameborder="0"></iframe>`;
 
   const handleCopy = async (text: string, message: string) => {

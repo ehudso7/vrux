@@ -553,7 +553,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
   };
 
   const handleShare = async () => {
-    const shareUrl = `https://vrux.app/share/${Date.now()}`;
+    const shareUrl = `https://vrux.dev/share/${Date.now()}`;
     await navigator.clipboard.writeText(shareUrl);
     toast.success('Share link copied!', {
       duration: 3000,

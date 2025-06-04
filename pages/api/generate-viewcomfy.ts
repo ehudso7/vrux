@@ -7,6 +7,7 @@ import logger from '../../lib/logger'
 import performanceMonitor from '../../lib/performance'
 import { createUIGenerationParams } from '../../lib/viewcomfy-utils'
 import type { ViewComfyGenerateRequest, ViewComfyGenerateResponse } from '../../lib/types'
+import { validateDomain } from '../../lib/domain-restriction'
 
 // Extend NextApiRequest to include custom properties
 interface ExtendedNextApiRequest extends NextApiRequest {
@@ -24,6 +25,24 @@ async function generateViewComfyHandler(
 	req: ExtendedNextApiRequest,
 	res: NextApiResponse<ViewComfyGenerateResponse>
 ) {
+	// Validate domain
+	const domainValidation = validateDomain(req)
+	if (!domainValidation.isValid) {
+		logger.warn('Request blocked by domain restriction', {
+			reason: domainValidation.reason,
+			origin: req.headers.origin,
+			referer: req.headers.referer,
+			host: req.headers.host,
+			url: req.url,
+			ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+		})
+		
+		return res.status(403).json({
+			success: false,
+			error: 'This service can only be accessed from vrux.dev'
+		} as ViewComfyGenerateResponse)
+	}
+
 	// Run CORS middleware
 	await runMiddleware(req, res, cors)
 
@@ -153,4 +172,4 @@ async function generateViewComfyHandler(
 	}
 }
 
-export default requestLogger(generateViewComfyHandler)
+export default requestLogger(generateViewComfyHandler);

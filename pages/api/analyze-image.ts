@@ -5,6 +5,7 @@ import cors, { runMiddleware } from '../../lib/cors';
 import requestLogger from '../../lib/middleware/request-logger';
 import logger from '../../lib/logger';
 import { z } from 'zod';
+import { validateDomain } from '../../lib/domain-restriction';
 
 const requestSchema = z.object({
   image: z.string().min(1),
@@ -78,4 +79,17 @@ async function analyzeImageHandler(
   }
 }
 
-export default requestLogger(analyzeImageHandler);
+// Apply domain restriction inside the handler
+async function protectedAnalyzeImageHandler(req: NextApiRequest, res: NextApiResponse) {
+  const validation = validateDomain(req);
+  if (!validation.isValid) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'This service can only be accessed from vrux.dev',
+      code: 'DOMAIN_RESTRICTION'
+    });
+  }
+  return analyzeImageHandler(req, res);
+}
+
+export default requestLogger(protectedAnalyzeImageHandler);

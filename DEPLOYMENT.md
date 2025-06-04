@@ -57,7 +57,7 @@ vercel --prod
 ### Step 3: Custom Domain (Optional)
 
 1. In Vercel Dashboard → Settings → Domains
-2. Add your domain (e.g., vrux.app)
+2. Add your domain (e.g., vrux.dev)
 3. Follow DNS configuration instructions
 
 ## Environment Variables Reference

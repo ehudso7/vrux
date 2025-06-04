@@ -363,11 +363,11 @@ const Home: NextPage = () => {
         <meta property="og:title" content="VRUX - AI Component Generator" />
         <meta property="og:description" content="Transform ideas into React components instantly" />
         <meta property="og:image" content="/og-image.png" />
-        <meta property="og:url" content="https://vrux.app" />
+        <meta property="og:url" content="https://vrux.dev" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:creator" content="@vrux_app" />
+        <meta name="twitter:creator" content="@vrux_dev" />
       </Head>
 
       <Tooltip.Provider delayDuration={200}>
@@ -530,7 +530,7 @@ const Home: NextPage = () => {
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>
                         <a 
-                          href="https://github.com/vrux/app" 
+                          href="https://github.com/ehudso7/vrux" 
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`p-2 rounded-lg ${
