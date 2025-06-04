@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { ExtendedNextApiRequest } from './types/api';
 import logger from './logger';
 
 /**
@@ -309,7 +310,8 @@ export function requireIpAllowlist(customConfig?: Partial<IpAllowlistConfig>) {
   
   return (req: NextApiRequest, res: NextApiResponse, next?: () => void) => {
     const clientIp = manager.getClientIp(req.headers);
-    const isAuthenticated = !!(req as any).user || !!(req as any).userId;
+    const extReq = req as ExtendedNextApiRequest;
+    const isAuthenticated = !!extReq.user || !!extReq.userId;
     
     const result = manager.isIpAllowed(clientIp, isAuthenticated);
     
@@ -329,8 +331,8 @@ export function requireIpAllowlist(customConfig?: Partial<IpAllowlistConfig>) {
     }
     
     // Attach IP info to request
-    (req as any).clientIp = clientIp;
-    (req as any).ipAllowlistMatch = result.matchedRule;
+    extReq.clientIp = clientIp;
+    extReq.ipAllowlistMatch = result.matchedRule;
     
     if (next) {
       next();

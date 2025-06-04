@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { ExtendedNextApiRequest } from './types/api';
 import { RateLimiter } from './rate-limiter';
 import logger from './logger';
 
@@ -295,9 +296,10 @@ export const tieredRateLimiter = new TieredRateLimiter();
  */
 export function requireRateLimit(endpoint?: string) {
   return (req: NextApiRequest, res: NextApiResponse, next?: () => void) => {
-    const userId = (req as any).userId || (req.headers['x-user-id'] as string) || req.socket?.remoteAddress;
-    const userPlan = (req as any).user?.plan || UserPlan.FREE;
-    const customRateLimit = (req as any).apiKey?.rateLimit;
+    const extReq = req as ExtendedNextApiRequest;
+    const userId = extReq.userId || (req.headers['x-user-id'] as string) || '127.0.0.1';
+    const userPlan = extReq.user?.plan || UserPlan.FREE;
+    const customRateLimit = extReq.apiKey?.rateLimit;
     
     const result = tieredRateLimiter.isAllowed(
       userId,

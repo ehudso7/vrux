@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { ExtendedNextApiRequest, ExtendedApiHandler } from './types/api';
 import { validateDomain } from './domain-restriction';
 import { apiKeyManager, ApiPermission } from './api-key-manager';
 import { tieredRateLimiter, UserPlan } from './rate-limiter-tiers';
@@ -23,9 +24,25 @@ export interface SecurityConfig {
  * Comprehensive security middleware
  */
 export function withSecurity(config: SecurityConfig = {}) {
-  return (handler: any) => {
+  return (handler: ExtendedApiHandler) => {
     return async (req: NextApiRequest, res: NextApiResponse) => {
-      const securityContext: any = {
+      interface SecurityContext {
+        timestamp: string;
+        url?: string;
+        method?: string;
+        userId?: string;
+        apiKeyId?: string;
+        country?: string | null;
+        region?: string | null;
+        ip?: string;
+        ipMatch?: string;
+        rateLimit?: {
+          limit: number;
+          remaining: number;
+        };
+      }
+      
+      const securityContext: SecurityContext = {
         timestamp: new Date().toISOString(),
         url: req.url,
         method: req.method,
@@ -78,9 +95,10 @@ export function withSecurity(config: SecurityConfig = {}) {
           }
           
           // Attach API key context
-          (req as any).apiKey = keyValidation.apiKey;
-          (req as any).userId = keyValidation.userId;
-          (req as any).permissions = keyValidation.permissions;
+          const extReq = req as ExtendedNextApiRequest;
+          extReq.apiKey = keyValidation.apiKey;
+          extReq.userId = keyValidation.userId;
+          extReq.permissions = keyValidation.permissions;
           securityContext.userId = keyValidation.userId;
           securityContext.apiKeyId = keyValidation.apiKey?.id;
         }
@@ -109,15 +127,17 @@ export function withSecurity(config: SecurityConfig = {}) {
             }
           }
           
-          (req as any).geoInfo = geoInfo;
+          const extReq = req as ExtendedNextApiRequest;
+          extReq.geoInfo = geoInfo;
           securityContext.country = geoInfo.country;
-          securityContext.region = geoInfo.region;
+          securityContext.region = geoInfo.region as string | null;
         }
         
         // 4. IP Allowlist
         if (config.requireIpAllowlist) {
           const clientIp = enterpriseIpAllowlist.getClientIp(req.headers);
-          const isAuthenticated = !!(req as any).userId;
+          const extReq = req as ExtendedNextApiRequest;
+          const isAuthenticated = !!extReq.userId;
           const ipResult = enterpriseIpAllowlist.isIpAllowed(clientIp, isAuthenticated);
           
           if (!ipResult.allowed) {
@@ -134,15 +154,16 @@ export function withSecurity(config: SecurityConfig = {}) {
             });
           }
           
-          (req as any).clientIp = clientIp;
+          extReq.clientIp = clientIp;
           securityContext.ip = clientIp;
           securityContext.ipMatch = ipResult.matchedRule;
         }
         
         // 5. Rate Limiting
         if (config.requireRateLimit !== false) {
-          const userId = (req as any).userId || req.headers['x-forwarded-for'] || 'anonymous';
-          const userPlan = (req as any).user?.plan || UserPlan.FREE;
+          const extReq = req as ExtendedNextApiRequest;
+          const userId = extReq.userId || (req.headers['x-forwarded-for'] as string) || 'anonymous';
+          const userPlan = extReq.user?.plan || UserPlan.FREE;
           const endpoint = req.url;
           
           // Check plan restrictions

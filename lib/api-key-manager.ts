@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { ExtendedNextApiRequest } from './types/api';
 import logger from './logger';
 
 /**
@@ -225,7 +226,8 @@ export class ApiKeyManager {
     
     for (const keyData of this.keys.values()) {
       if (keyData.userId === userId && !keyData.revokedAt) {
-        const { key: _, ...publicData } = keyData;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { key, ...publicData } = keyData;
         userKeys.push(publicData);
       }
     }
@@ -286,7 +288,7 @@ export function requireApiKey(permission?: ApiPermission) {
     if (!validation.isValid) {
       logger.warn('Invalid API key attempt', {
         error: validation.error,
-        ip: (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress,
+        ip: (req.headers['x-forwarded-for'] as string) || '127.0.0.1',
       });
       
       return res.status(403).json({
@@ -296,7 +298,7 @@ export function requireApiKey(permission?: ApiPermission) {
     }
     
     // Check IP allowlist
-    const clientIp = (req.headers['x-forwarded-for'] as string) || (req.socket as any)?.remoteAddress || '127.0.0.1';
+    const clientIp = (req.headers['x-forwarded-for'] as string) || '127.0.0.1';
     if (validation.apiKey && !apiKeyManager.isIpAllowed(validation.apiKey, clientIp)) {
       return res.status(403).json({
         error: 'IP address not allowed',
@@ -321,9 +323,10 @@ export function requireApiKey(permission?: ApiPermission) {
     }
     
     // Attach user info to request
-    (req as any).apiKey = validation.apiKey;
-    (req as any).userId = validation.userId;
-    (req as any).permissions = validation.permissions;
+    const extReq = req as ExtendedNextApiRequest;
+    extReq.apiKey = validation.apiKey;
+    extReq.userId = validation.userId;
+    extReq.permissions = validation.permissions;
     
     if (next) {
       next();
