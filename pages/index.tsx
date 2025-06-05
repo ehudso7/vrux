@@ -187,7 +187,18 @@ const Home: NextPage = () => {
             break;
           case '/':
             e.preventDefault();
-            // Toggle code view
+            // Toggle between preview and code tabs if component is generated
+            if (variants.length > 0 || generatedCode) {
+              const tabsElement = document.querySelector('[role="tablist"]');
+              if (tabsElement) {
+                const currentTab = tabsElement.querySelector('[data-state="active"]');
+                const isPreview = currentTab?.textContent?.includes('Preview');
+                const targetTab = tabsElement.querySelector(
+                  isPreview ? '[value="code"]' : '[value="preview"]'
+                ) as HTMLElement;
+                targetTab?.click();
+              }
+            }
             break;
         }
       }
@@ -854,7 +865,10 @@ const Home: NextPage = () => {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => router.push(`/generate?prompt=${encodeURIComponent(example.fullText)}`)}
+                      onClick={() => {
+                        setPrompt(example.fullText);
+                        setTimeout(() => handleGenerate(), 100);
+                      }}
                       className={`group p-4 ${
                         darkMode 
                           ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' 
@@ -896,6 +910,19 @@ const Home: NextPage = () => {
                     <Tooltip.Root>
                       <Tooltip.Trigger asChild>
                         <button 
+                          onClick={async () => {
+                            if (!prompt.trim()) {
+                              toast.error('Please enter a prompt first');
+                              return;
+                            }
+                            
+                            const enhancedPrompt = `Create a ${prompt}. Make it modern, visually appealing with excellent UX. Include proper animations, hover states, and ensure it's fully responsive. Use modern design patterns and best practices.`;
+                            setPrompt(enhancedPrompt);
+                            toast.success('Prompt enhanced!', {
+                              duration: 2000,
+                              icon: '✨',
+                            });
+                          }}
                           className={`p-2 rounded-lg ${
                             darkMode 
                               ? 'hover:bg-gray-700 text-gray-400' 
@@ -910,17 +937,25 @@ const Home: NextPage = () => {
                       </Tooltip.Content>
                     </Tooltip.Root>
                     
-                    <Link href={`/generate?prompt=${encodeURIComponent(prompt)}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        disabled={!prompt.trim()}
-                        className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-purple-500/25 transition-all flex items-center gap-2"
-                      >
-                        <Send className="w-4 h-4" />
-                        <span className="hidden sm:inline">Generate</span>
-                      </motion.button>
-                    </Link>
+                    <motion.button
+                      onClick={handleGenerate}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={!prompt.trim() || isGenerating}
+                      className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-purple-500/25 transition-all flex items-center gap-2"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="hidden sm:inline">Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate</span>
+                        </>
+                      )}
+                    </motion.button>
                   </div>
                   
                   {/* Character count */}

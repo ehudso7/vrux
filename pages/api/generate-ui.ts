@@ -8,9 +8,10 @@ import type { GenerateUIResponse, GenerateUIError } from '../../lib/types';
 import { promptSchema, validateGeneratedComponent, securityHeaders } from '../../lib/ai-validation';
 import { getAvailableProvider } from '../../lib/ai-providers';
 import { validateDomain } from '../../lib/domain-restriction';
+import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
-// Extend NextApiRequest to include custom properties
-interface ExtendedNextApiRequest extends NextApiRequest {
+// Extend AuthenticatedRequest to include custom properties
+interface ExtendedAuthenticatedRequest extends AuthenticatedRequest {
   id?: string;
 }
 
@@ -39,7 +40,7 @@ const systemPrompt = `You are an expert React/Tailwind CSS UI developer. Generat
 
 
 async function generateUIHandler(
-  req: ExtendedNextApiRequest,
+  req: ExtendedAuthenticatedRequest,
   res: NextApiResponse<GenerateUIResponse | GenerateUIError>
 ) {
   // Validate domain
@@ -71,8 +72,8 @@ async function generateUIHandler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate limiting
-  const identifier = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'anonymous';
+  // Rate limiting per user
+  const identifier = req.user?.id || req.headers['x-forwarded-for'] as string || 'anonymous';
   if (!rateLimiter.isAllowed(identifier)) {
     const resetTime = rateLimiter.getResetTime(identifier);
     return res.status(429).json({ 
@@ -269,4 +270,4 @@ async function generateUIHandler(
   }
 }
 
-export default requestLogger(generateUIHandler); 
+export default requestLogger(requireAuthWithApiLimit(generateUIHandler)); 

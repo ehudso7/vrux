@@ -6,8 +6,9 @@ import logger from '../../lib/logger';
 import performanceMonitor from '../../lib/performance';
 import { getAvailableProvider } from '../../lib/ai-providers';
 import { validateDomain } from '../../lib/domain-restriction';
+import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
-interface ExtendedNextApiRequest extends NextApiRequest {
+interface ExtendedAuthenticatedRequest extends AuthenticatedRequest {
   id?: string;
 }
 
@@ -37,7 +38,7 @@ const VARIANT_PROMPTS = [
 ];
 
 async function generateUIStreamHandler(
-  req: ExtendedNextApiRequest,
+  req: ExtendedAuthenticatedRequest,
   res: NextApiResponse
 ) {
   // Validate domain
@@ -186,4 +187,4 @@ Create a React component for: ${variantPrompt}`;
   }
 }
 
-export default requestLogger(generateUIStreamHandler);
+export default requestLogger(requireAuthWithApiLimit(generateUIStreamHandler));

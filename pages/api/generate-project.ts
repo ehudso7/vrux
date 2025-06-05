@@ -9,6 +9,7 @@ import { sanitizeGeneratedCode } from '@/lib/ai-validation';
 import limiter from '@/lib/rate-limiter';
 import logger from '@/lib/logger';
 import { validateDomain } from '@/lib/domain-restriction';
+import { requireAuthWithApiLimit, type AuthenticatedRequest } from '@/lib/middleware/auth';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -41,7 +42,7 @@ async function generateComponent(prompt: string): Promise<string> {
   return sanitizeGeneratedCode(code);
 }
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   // Validate domain
   const domainValidation = validateDomain(req);
   if (!domainValidation.isValid) {
@@ -74,8 +75,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate limiting
-  const identifier = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'anonymous';
+  // Rate limiting per user
+  const identifier = req.user?.id || req.headers['x-forwarded-for'] as string || 'anonymous';
   if (!limiter.isAllowed(identifier)) {
     return res.status(429).json({ 
       error: 'Too many requests. Please try again later.',
@@ -219,4 +220,4 @@ export async function signOut() {
   }
 }
 
-export default handler;
+export default requireAuthWithApiLimit(handler);

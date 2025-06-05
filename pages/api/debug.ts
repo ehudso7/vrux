@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { requireAdmin, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   res.status(200).json({
     message: 'Server is running',
     timestamp: new Date().toISOString(),
@@ -14,3 +15,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     url: req.url,
   });
 }
+
+export default requireAdmin(handler);

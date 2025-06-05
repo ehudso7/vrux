@@ -3,13 +3,15 @@ import '../globals.css';
 import PageLoading from '../components/page-loading';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../lib/auth-context';
+import { ErrorBoundary } from '../components/error-boundary';
  
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <AuthProvider>
-      <PageLoading />
-      <Component {...pageProps} />
-      <Toaster 
+    <ErrorBoundary>
+      <AuthProvider>
+        <PageLoading />
+        <Component {...pageProps} />
+        <Toaster 
         position="bottom-right"
         toastOptions={{
           duration: 4000,
@@ -33,6 +35,7 @@ export default function App({ Component, pageProps }: AppProps) {
           },
         }}
       />
-    </AuthProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 } 

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import AdvancedGenerationInterface from '../components/advanced-generation-interface';
+import { ComponentErrorBoundary } from '../components/error-boundary';
 
 const Generate: NextPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -107,7 +108,9 @@ const Generate: NextPage = () => {
           </nav>
 
           {/* Generation Interface */}
-          <AdvancedGenerationInterface darkMode={darkMode} />
+          <ComponentErrorBoundary componentName="Generation Interface">
+            <AdvancedGenerationInterface darkMode={darkMode} />
+          </ComponentErrorBoundary>
 
           <Toaster 
             position="bottom-right"

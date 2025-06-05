@@ -1,12 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { HealthCheckResponse } from '../../lib/types';
+import { requireAuth, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
 /**
  * Health check endpoint for monitoring
  * Returns system status and configuration info
  */
-export default function healthHandler(
-  req: NextApiRequest,
+function healthHandler(
+  req: AuthenticatedRequest,
   res: NextApiResponse<HealthCheckResponse | { error: string }>
 ) {
   if (req.method !== 'GET') {
@@ -33,4 +34,6 @@ export default function healthHandler(
   res.setHeader('Expires', '0');
   
   res.status(200).json(healthData);
-} 
+}
+
+export default requireAuth(healthHandler); 
