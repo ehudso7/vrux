@@ -1,182 +1,25 @@
 # Dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# Testing
-/coverage
+node_modules/
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
 
-# Production
-/build
-/dist
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment files - CRITICAL
+# Environment files
 .env
-.env.*
-!.env.example
 .env.local
-.env.production
-.env.development
-.env.test
-.env.docker
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Vercel
-.vercel
+# Logs
+*.log
+logs/
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE & Editors
-.cursor/
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# Logs - May contain sensitive data
-logs/
-*.log
-server.log
-error.log
-access.log
-combined.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# OS Files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Temporary files
-.cache/
-tmp/
-temp/
-*.tmp
-*.temp
-.temp/
-.tmp/
-
-# Build artifacts
-dist/
-build/
-out/
-.next/
-.nuxt/
-.vuepress/dist
-.serverless/
-.fusebox/
-.dynamodb/
-
-# User data & Sessions
-sessions/
-uploads/
-user-data/
-generated-components/
-user-uploads/
-private/
-
-# Security & Credentials
-*.pem
-*.key
-*.cert
-*.crt
-*-credentials.json
-*-key.json
-.secrets/
-private/
-credentials/
-auth/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-*.sql
-local.db
-development.db
-
-# Docker
-docker-volumes/
-docker-compose.override.yml
-.dockerignore.local
-
-# Testing artifacts
-test-results/
-playwright-report/
-playwright/.cache/
-cypress/videos/
-cypress/screenshots/
-
-# Package files
-*.tgz
-
-# Backup files
-*.backup
-*.bak
-*.old
-*~
-
-# API response cache
-.api-cache/
-cache/
-
-# User uploaded images
-public/uploads/
-static/uploads/
-
-# Local configuration
-config.local.js
-config.local.json
-settings.local.json
-
-# Python (if any Python scripts)
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-
-# Ruby (if any Ruby scripts)
-*.gem
-*.rbc
-/.config
-
-# Sensitive patterns
-*secret*
-*private*
-*credential*
-*password*
-!*example*
-!*template*
+# Typescript
+*.tsbuildinfo
