@@ -1,16 +1,12 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useAuth } from '../lib/auth-context';
 import GenerationChat from '../components/GenerationChat';
 import GeneratorLayout from '../components/layouts/GeneratorLayout';
 import WelcomeScreen from '../components/WelcomeScreen';
-import type { ChatMessage } from '../lib/types';
+import type { ChatMessage } from '../lib/store';
 import { generateUniqueId } from '../lib/utils';
 
 export default function Generate() {
-  const { user } = useAuth();
-  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -19,7 +15,7 @@ export default function Generate() {
 
     const userMessage: ChatMessage = {
       id: generateUniqueId(),
-      type: 'user',
+      role: 'user',
       content: prompt,
       timestamp: new Date()
     };
@@ -49,9 +45,14 @@ export default function Generate() {
 
       const assistantMessage: ChatMessage = {
         id: generateUniqueId(),
-        type: 'assistant',
+        role: 'assistant',
         content: 'I\'ve generated your component. You can view and edit it in the preview.',
-        code: data.code,
+        components: [{
+          id: generateUniqueId(),
+          prompt: prompt,
+          code: data.code,
+          timestamp: new Date()
+        }],
         timestamp: new Date()
       };
 
@@ -59,7 +60,7 @@ export default function Generate() {
     } catch (error) {
       const errorMessage: ChatMessage = {
         id: generateUniqueId(),
-        type: 'error',
+        role: 'system',
         content: error instanceof Error ? error.message : 'Failed to generate component',
         timestamp: new Date()
       };

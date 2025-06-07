@@ -40,7 +40,7 @@ const VARIANT_PROMPTS = [
 async function generateUIStreamHandler(
   req: ExtendedAuthenticatedRequest,
   res: NextApiResponse
-) {
+): Promise<void> {
   // Validate domain
   const domainValidation = validateDomain(req);
   if (!domainValidation.isValid) {

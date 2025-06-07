@@ -138,6 +138,10 @@ class AuthStore {
     }
   }
 
+  updateUserApiCalls(userId: string): void {
+    this.incrementApiCalls(userId);
+  }
+
   private cleanupSessions(): void {
     const now = new Date();
     for (const [sessionId, session] of Array.from(this.sessions.entries())) {
