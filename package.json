@@ -76,7 +76,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "express-rate-limit": "^7.5.0",
-    "framer-motion": "^12.15.0",
+    "framer-motion": "^12.16.0",
     "isolated-vm": "^5.0.4",
     "isomorphic-dompurify": "^2.25.0",
     "lucide-react": "^0.511.0",

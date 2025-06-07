@@ -1,95 +1,84 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { parse } from 'cookie';
+import { NextApiRequest, NextApiResponse, NextApiHandler } from 'next';
 import { authStore } from '../auth-store';
-import type { User } from '../auth-store';
+import logger from '../logger';
 
 export interface AuthenticatedRequest extends NextApiRequest {
-  user?: User;
-}
-
-export function requireAuth(
-  handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void> | void
-) {
-  return async (req: AuthenticatedRequest, res: NextApiResponse) => {
-    // Parse cookies
-    const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
-    const sessionToken = cookies['auth-token'];
-    
-    if (!sessionToken) {
-      return res.status(401).json({
-        error: 'Authentication Required',
-        message: 'Please sign in to use this feature',
-        code: 'AUTH_REQUIRED',
-      });
-    }
-
-    // Validate session and get user
-    const user = authStore.validateSession(sessionToken);
-    if (!user) {
-      return res.status(401).json({
-        error: 'Invalid Session',
-        message: 'Your session has expired. Please sign in again.',
-        code: 'SESSION_EXPIRED',
-      });
-    }
-
-    // Attach user to request
-    req.user = user;
-
-    // Call the handler
-    return handler(req, res);
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    plan: 'free' | 'pro' | 'enterprise';
+    apiCalls: number;
+    maxApiCalls: number;
   };
 }
 
-export function requireAuthWithApiLimit(
-  handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void> | void
-) {
-  return requireAuth(async (req: AuthenticatedRequest, res: NextApiResponse) => {
-    const user = req.user!;
-
-    // Check API usage limits
-    if (user.apiCalls >= user.maxApiCalls) {
-      return res.status(429).json({
-        error: 'API Limit Exceeded',
-        message: `You have reached your ${user.plan} plan limit of ${user.maxApiCalls} API calls. Please upgrade your plan.`,
-        code: 'API_LIMIT_EXCEEDED',
-        usage: {
-          used: user.apiCalls,
-          limit: user.maxApiCalls,
-          plan: user.plan,
-        },
-      });
-    }
-
-    // Track API usage after successful response
-    const originalJson = res.json;
-    res.json = function<T>(data: T) {
-      // Only increment if it's a successful response
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        authStore.incrementApiCalls(user.id);
+export function requireAuth(handler: NextApiHandler) {
+  return async (req: AuthenticatedRequest, res: NextApiResponse) => {
+    try {
+      // In development, create a mock user for testing
+      if (process.env.NODE_ENV === 'development') {
+        req.user = {
+          id: 'dev-user',
+          email: 'dev@vrux.dev',
+          name: 'Dev User',
+          plan: 'free',
+          apiCalls: 0,
+          maxApiCalls: 100
+        };
+        return handler(req, res);
       }
-      return originalJson.call(this, data);
-    };
 
-    return handler(req, res);
-  });
+      // Production auth logic
+      const sessionCookie = req.cookies.session;
+      if (!sessionCookie) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const session = authStore.getSession(sessionCookie);
+      if (!session) {
+        return res.status(401).json({ error: 'Invalid session' });
+      }
+
+      const user = authStore.findUserById(session.userId);
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      req.user = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        apiCalls: user.apiCalls,
+        maxApiCalls: user.maxApiCalls
+      };
+
+      return handler(req, res);
+    } catch (error) {
+      logger.error('Auth middleware error', error as Error);
+      return res.status(500).json({ error: 'Authentication error' });
+    }
+  };
 }
 
-// Middleware for endpoints that should be admin-only
-export function requireAdmin(
-  handler: (req: AuthenticatedRequest, res: NextApiResponse) => Promise<void> | void
-) {
+export function requireAuthWithApiLimit(handler: NextApiHandler) {
   return requireAuth(async (req: AuthenticatedRequest, res: NextApiResponse) => {
-    const user = req.user!;
-
-    if (user.plan !== 'enterprise') {
-      return res.status(403).json({
-        error: 'Admin Access Required',
-        message: 'This endpoint requires enterprise plan access',
-        code: 'ADMIN_REQUIRED',
+    if (req.user && req.user.apiCalls >= req.user.maxApiCalls) {
+      return res.status(429).json({ 
+        error: 'API limit exceeded',
+        limit: req.user.maxApiCalls,
+        used: req.user.apiCalls
       });
     }
-
-    return handler(req, res);
+    
+    const result = await handler(req, res);
+    
+    // Increment API calls after successful request
+    if (req.user && res.statusCode === 200) {
+      authStore.updateUserApiCalls(req.user.id);
+    }
+    
+    return result;
   });
 }
