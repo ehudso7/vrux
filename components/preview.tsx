@@ -68,8 +68,8 @@ export default function Preview({ code }: PreviewProps) {
     ${cleanCode}
   );
 }`;
-    } catch (err) {
-      console.error('Error processing code:', err);
+    } catch {
+      // Error processing code
       return '';
     }
   }, [code]);

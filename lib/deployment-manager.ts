@@ -116,7 +116,8 @@ export async function deployToVercel(
       data: Buffer.from(file.content).toString('base64'),
     }));
 
-    const response = await fetch('https://api.vercel.com/v13/deployments', {
+    const vercelApiUrl = process.env.VERCEL_API_URL || 'https://api.vercel.com/v13/deployments';
+    const response = await fetch(vercelApiUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${vercelToken}`,
@@ -171,7 +172,8 @@ export async function deployToNetlify(
     const zipBuffer = await createProjectZip(files);
 
     // Create site if it doesn't exist
-    const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
+    const netlifyApiUrl = process.env.NETLIFY_API_URL || 'https://api.netlify.com/api/v1';
+    const createSiteResponse = await fetch(`${netlifyApiUrl}/sites`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${netlifyToken}`,
@@ -192,7 +194,7 @@ export async function deployToNetlify(
 
     // Deploy the zip
     const deployResponse = await fetch(
-      `https://api.netlify.com/api/v1/sites/${siteId}/deploys`,
+      `${netlifyApiUrl}/sites/${siteId}/deploys`,
       {
         method: 'POST',
         headers: {

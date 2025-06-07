@@ -40,6 +40,7 @@ export function withSecurity(config: SecurityConfig = {}) {
           limit: number;
           remaining: number;
         };
+        [key: string]: unknown; // Allow additional properties
       }
       
       const securityContext: SecurityContext = {

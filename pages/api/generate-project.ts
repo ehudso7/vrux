@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { z } from 'zod';
 import { 
@@ -42,7 +42,7 @@ async function generateComponent(prompt: string): Promise<string> {
   return sanitizeGeneratedCode(code);
 }
 
-async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse): Promise<void> {
   // Validate domain
   const domainValidation = validateDomain(req);
   if (!domainValidation.isValid) {
@@ -55,11 +55,12 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
     });
     
-    return res.status(403).json({
+    res.status(403).json({
       error: 'Forbidden',
       message: 'This service can only be accessed from vrux.dev',
       code: 'DOMAIN_RESTRICTION'
     });
+    return;
   }
 
   // Set CORS headers
@@ -68,21 +69,24 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   // Rate limiting per user
   const identifier = req.user?.id || req.headers['x-forwarded-for'] as string || 'anonymous';
   if (!limiter.isAllowed(identifier)) {
-    return res.status(429).json({ 
+    res.status(429).json({ 
       error: 'Too many requests. Please try again later.',
       remainingRequests: limiter.getRemainingRequests(identifier),
       resetTime: limiter.getResetTime(identifier) 
     });
+    return;
   }
 
   try {
@@ -114,7 +118,7 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(\`API server running on port \${PORT}\`);
+  // Server started on port
 });`,
         type: 'api',
         language: 'typescript'
@@ -209,14 +213,17 @@ export async function signOut() {
     });
 
     res.status(200).json({ project });
+    return;
   } catch (error) {
     if (error instanceof z.ZodError) {
       logger.warn('Invalid project generation request', { errors: error.errors });
-      return res.status(400).json({ error: 'Invalid request', details: error.errors });
+      res.status(400).json({ error: 'Invalid request', details: error.errors });
+      return;
     }
 
     logger.error('Project generation failed', error instanceof Error ? error : new Error(String(error)));
     res.status(500).json({ error: 'Failed to generate project structure' });
+    return;
   }
 }
 

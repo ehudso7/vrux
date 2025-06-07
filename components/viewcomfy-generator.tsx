@@ -48,7 +48,6 @@ export default function ViewComfyGenerator({ onGenerate, className = '' }: ViewC
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'An error occurred'
 			setError(message)
-			console.error('ViewComfy generation error:', err)
 		} finally {
 			setIsGenerating(false)
 		}

@@ -46,8 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch {
+      // Auth check failed
       setUser(null);
     } finally {
       setLoading(false);

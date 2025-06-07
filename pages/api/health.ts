@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import type { HealthCheckResponse } from '../../lib/types';
 import { requireAuth, type AuthenticatedRequest } from '../../lib/middleware/auth';
 

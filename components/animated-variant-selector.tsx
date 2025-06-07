@@ -8,7 +8,7 @@ interface AnimatedVariantSelectorProps {
   variants: { id: string; name: string; icon: React.ReactNode; style: string; color: string; }[];
   selectedVariant: number;
   onVariantSelect: (index: number) => void;
-  generatedVariants: string[];
+  generatedVariants: Array<{ code: string } | null>;
   darkMode: boolean;
 }
 

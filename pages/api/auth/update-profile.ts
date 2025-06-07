@@ -1,13 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authStore } from '../../../lib/auth-store';
 import logger from '../../../lib/logger';
+import { requireDomain } from '../../../lib/domain-restriction';
+import { withAuthRateLimit } from '../../../lib/auth-rate-limiter';
 
-export default async function handler(
+async function updateProfileHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== 'PUT') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method Not Allowed',
+      message: 'Invalid request method',
+      code: 'METHOD_NOT_ALLOWED'
+    });
   }
 
   try {
@@ -15,19 +21,32 @@ export default async function handler(
     const sessionId = req.cookies.session;
     
     if (!sessionId) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'NOT_AUTHENTICATED'
+      });
     }
 
     // Get session
     const session = authStore.getSession(sessionId);
     if (!session) {
-      return res.status(401).json({ message: 'Session expired' });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'SESSION_EXPIRED'
+      });
     }
 
     // Get current user
     const user = authStore.findUserById(session.userId);
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      logger.error('User not found for valid session', new Error('User not found'), { sessionId, userId: session.userId });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'USER_NOT_FOUND'
+      });
     }
 
     // Update user
@@ -42,26 +61,43 @@ export default async function handler(
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return res.status(400).json({ message: 'Invalid email format' });
+        return res.status(400).json({ 
+          error: 'Bad Request',
+          message: 'Invalid request parameters',
+          code: 'INVALID_EMAIL'
+        });
       }
 
       // Check if email is already taken
       const existingUser = authStore.findUserByEmail(email);
       if (existingUser && existingUser.id !== user.id) {
-        return res.status(409).json({ message: 'Email already in use' });
+        return res.status(409).json({ 
+          error: 'Conflict',
+          message: 'Unable to update profile',
+          code: 'EMAIL_IN_USE'
+        });
       }
 
       updates.email = email;
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'No updates provided' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid request parameters',
+        code: 'NO_UPDATES'
+      });
     }
 
     // Update user
     const updatedUser = authStore.updateUser(user.id, updates);
     if (!updatedUser) {
-      return res.status(500).json({ message: 'Failed to update profile' });
+      logger.error('Failed to update user profile', new Error('Update failed'), { userId: user.id, updates });
+      return res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: 'Unable to update profile',
+        code: 'UPDATE_FAILED'
+      });
     }
 
     logger.info('User profile updated', { userId: user.id, updates });
@@ -78,6 +114,15 @@ export default async function handler(
     });
   } catch (error) {
     logger.error('Profile update error', error instanceof Error ? error : new Error(String(error)));
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An error occurred while updating profile',
+      code: 'INTERNAL_ERROR'
+    });
   }
 }
+
+// Apply domain restriction and standard rate limiting
+export default requireDomain(
+  withAuthRateLimit(updateProfileHandler, 'standard')
+);

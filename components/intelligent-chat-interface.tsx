@@ -269,9 +269,8 @@ export default function IntelligentChatInterface({
         setPrompt(prompt);
         toast.success('Image analyzed! Review the generated prompt and click send.');
       };
-    } catch (error) {
+    } catch {
       toast.error('Failed to analyze image');
-      console.error(error);
     } finally {
       setIsAnalyzingImage(false);
     }

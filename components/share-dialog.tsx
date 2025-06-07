@@ -8,26 +8,84 @@ import {
   Share2, 
   Globe, 
   Lock,
-  Users,
   Link2,
-  QrCode
+  Loader2,
+  Tag,
+  Eye
 } from 'lucide-react';
 import { Button } from './ui/button';
 import toast from 'react-hot-toast';
+import { useAuth } from '../lib/auth-context';
 
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  componentId: string;
+  code: string;
+  title?: string;
 }
 
-export default function ShareDialog({ open, onOpenChange, componentId }: ShareDialogProps) {
+export default function ShareDialog({ open, onOpenChange, code, title = 'My Component' }: ShareDialogProps) {
+  const { user } = useAuth();
   const [shareType, setShareType] = useState<'public' | 'private'>('public');
+  const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareId, setShareId] = useState('');
   
-  // Generate shareable URL (in production this would be a real URL)
-  const shareUrl = `https://vrux.dev/share/${componentId}`;
-  const embedCode = `<iframe src="${shareUrl}/embed" width="100%" height="600" frameborder="0"></iframe>`;
+  // Reset state when dialog closes
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset all state
+      setShareType('public');
+      setDescription('');
+      setTags('');
+      setCopied(false);
+      setSharing(false);
+      setShareUrl('');
+      setShareId('');
+    }
+    onOpenChange(newOpen);
+  };
+  
+  const embedCode = shareUrl ? `<iframe src="${shareUrl}/embed" width="100%" height="600" frameborder="0"></iframe>` : '';
+
+  const handleShare = async () => {
+    if (!user) {
+      toast.error('Please sign in to share components');
+      return;
+    }
+
+    setSharing(true);
+    try {
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          title,
+          description,
+          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          isPublic: shareType === 'public',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create share');
+      }
+
+      const data = await response.json();
+      setShareUrl(data.url);
+      setShareId(data.share.id);
+      
+      toast.success('Component shared successfully!');
+    } catch {
+      toast.error('Failed to share component');
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const handleCopy = async (text: string, message: string) => {
     try {
@@ -41,7 +99,7 @@ export default function ShareDialog({ open, onOpenChange, componentId }: ShareDi
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <AnimatePresence>
           {open && (
@@ -78,8 +136,43 @@ export default function ShareDialog({ open, onOpenChange, componentId }: ShareDi
                     </Dialog.Close>
                   </div>
 
-                  {/* Share Type Selector */}
-                  <div className="grid grid-cols-2 gap-3 mb-6">
+                  {!shareId ? (
+                    <>
+                      {/* Component Details */}
+                      <div className="space-y-4 mb-6">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Description (optional)
+                          </label>
+                          <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe your component..."
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            maxLength={500}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Tags (optional)
+                          </label>
+                          <div className="relative">
+                            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                              type="text"
+                              value={tags}
+                              onChange={(e) => setTags(e.target.value)}
+                              placeholder="react, tailwind, dashboard"
+                              className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
+                        </div>
+                      </div>
+
+                      {/* Share Type Selector */}
+                      <div className="grid grid-cols-2 gap-3 mb-6">
                     <button
                       onClick={() => setShareType('public')}
                       className={`
@@ -110,82 +203,105 @@ export default function ShareDialog({ open, onOpenChange, componentId }: ShareDi
                     </button>
                   </div>
 
-                  {/* Share Link */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Share Link
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 flex items-center bg-gray-50 rounded-lg px-3 py-2">
-                          <Link2 className="w-4 h-4 text-gray-400 mr-2" />
-                          <input
-                            type="text"
-                            value={shareUrl}
-                            readOnly
-                            className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
-                          />
+                      {/* Share Button */}
+                      <Button
+                        onClick={handleShare}
+                        disabled={sharing || !code}
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50"
+                      >
+                        {sharing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Creating share link...
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Create Share Link
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    /* Share Success Section */
+                    <div className="space-y-6">
+                      {/* Success Message */}
+                      <div className="text-center py-4">
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Check className="w-8 h-8 text-green-600" />
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleCopy(shareUrl, 'Link copied!')}
-                          className="px-3"
+                        <h3 className="text-lg font-semibold mb-2">Component Shared Successfully!</h3>
+                        <p className="text-sm text-gray-600">Your component is now {shareType === 'public' ? 'publicly' : 'privately'} accessible.</p>
+                      </div>
+
+                      {/* Share Link */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Share Link
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 flex items-center bg-gray-50 rounded-lg px-3 py-2">
+                            <Link2 className="w-4 h-4 text-gray-400 mr-2" />
+                            <input
+                              type="text"
+                              value={shareUrl}
+                              readOnly
+                              className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleCopy(shareUrl, 'Link copied!')}
+                            className="px-3"
+                          >
+                            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Embed Code */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Embed Code
+                        </label>
+                        <div className="relative">
+                          <textarea
+                            value={embedCode}
+                            readOnly
+                            rows={3}
+                            className="w-full bg-gray-50 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 resize-none"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCopy(embedCode, 'Embed code copied!')}
+                            className="absolute top-2 right-2"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center space-x-3 pt-4">
+                        <a
+                          href={shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-xl font-medium text-center hover:shadow-lg hover:shadow-purple-500/25 transition-all flex items-center justify-center gap-2"
                         >
-                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          <Eye className="w-4 h-4" />
+                          View Share
+                        </a>
+                        <Button
+                          onClick={() => handleOpenChange(false)}
+                          className="flex-1 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        >
+                          Done
                         </Button>
                       </div>
                     </div>
-
-                    {/* Embed Code */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Embed Code
-                      </label>
-                      <div className="relative">
-                        <textarea
-                          value={embedCode}
-                          readOnly
-                          rows={3}
-                          className="w-full bg-gray-50 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 resize-none"
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleCopy(embedCode, 'Embed code copied!')}
-                          className="absolute top-2 right-2"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* QR Code */}
-                    <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg">
-                      <div className="text-center space-y-2">
-                        <QrCode className="w-24 h-24 text-gray-300 mx-auto" />
-                        <p className="text-xs text-gray-500">QR code generation coming soon</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t">
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span className="flex items-center space-x-1">
-                        <Users className="w-3 h-3" />
-                        <span>0 views</span>
-                      </span>
-                      <span>Expires: Never</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-                        Cancel
-                      </Button>
-                      <Button size="sm" className="gradient-primary text-white">
-                        Create Link
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </motion.div>
               </Dialog.Content>
             </>

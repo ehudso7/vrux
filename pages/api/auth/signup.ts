@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authStore } from '../../../lib/auth-store';
 import logger from '../../../lib/logger';
+import { requireDomain } from '../../../lib/domain-restriction';
+import { withAuthRateLimit, logFailedAuth, getUserIdentifier } from '../../../lib/auth-rate-limiter';
 
-export default async function handler(
+async function signupHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -14,24 +16,43 @@ export default async function handler(
     const { email, password, name } = req.body;
 
     if (!email || !password || !name) {
-      return res.status(400).json({ message: 'Email, password, and name are required' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid request parameters',
+        code: 'INVALID_REQUEST'
+      });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid request parameters',
+        code: 'INVALID_EMAIL'
+      });
     }
 
     // Validate password strength
     if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Password does not meet requirements',
+        code: 'WEAK_PASSWORD'
+      });
     }
 
     // Check if user exists
     const existingUser = authStore.findUserByEmail(email);
+    const identifier = getUserIdentifier(req);
+    
     if (existingUser) {
-      return res.status(409).json({ message: 'Email already registered' });
+      logFailedAuth('signup', identifier, 'email_exists', { email });
+      return res.status(409).json({ 
+        error: 'Conflict',
+        message: 'Unable to create account',
+        code: 'ACCOUNT_EXISTS'
+      });
     }
 
     // Create user
@@ -62,6 +83,33 @@ export default async function handler(
     });
   } catch (error) {
     logger.error('Sign up error', error instanceof Error ? error : new Error(String(error)));
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An error occurred during registration',
+      code: 'INTERNAL_ERROR'
+    });
   }
 }
+
+// Apply domain restriction and rate limiting
+// Wrap with error handling to ensure JSON responses
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  try {
+    // In development, skip domain restriction
+    if (process.env.NODE_ENV === 'development') {
+      return await withAuthRateLimit(signupHandler, 'signup')(req, res);
+    }
+    // In production, apply domain restriction
+    return await requireDomain(withAuthRateLimit(signupHandler, 'signup'))(req, res);
+  } catch (error) {
+    // Always return JSON for API errors
+    logger.error('Signup endpoint error', error as Error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to process signup request',
+      code: 'SIGNUP_ERROR'
+    });
+  }
+};
+
+export default handler;

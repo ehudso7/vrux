@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import rateLimiter from '../../lib/rate-limiter';
 import cors, { runMiddleware } from '../../lib/cors';
 import requestLogger from '../../lib/middleware/request-logger';

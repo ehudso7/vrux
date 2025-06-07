@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
+import { useStore } from '@/lib/store';
 import { 
   Sparkles, 
   Send, 
@@ -64,14 +65,23 @@ import DatabaseSchemaDesigner from './database-schema-designer';
 import AuthBuilder from './auth-builder';
 import DeploymentPanel from './deployment-panel';
 import { MultiFileWorkspace } from './multi-file-workspace';
+import ShareDialog from './share-dialog';
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant' | 'system' | 'file' | 'terminal' | 'step';
+  role: 'user' | 'assistant' | 'system';
+  type?: 'file' | 'terminal' | 'step';
   content: string;
   timestamp: Date;
   variant?: number;
   metadata?: Record<string, unknown>;
+  components?: Array<{
+    id: string;
+    prompt: string;
+    code: string;
+    timestamp: Date;
+    variant: number;
+  }>;
 }
 
 interface FileNode {
@@ -143,18 +153,36 @@ const FEATURES = {
 
 export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenerationInterfaceProps) {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Get state from Zustand store
+  const {
+    messages,
+    addMessage,
+    isGenerating,
+    setIsGenerating,
+    streamingContent,
+    setStreamingContent,
+    currentVariants,
+    selectedVariant,
+    setCurrentVariants,
+    selectVariant,
+    // Destructure but don't use these for now
+    // pushToHistory,
+    // savedComponents,
+    // saveComponent,
+    // deleteComponent
+  } = useStore();
+
+  // Local state for UI-specific concerns
   const [prompt, setPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState('');
-  const [variants, setVariants] = useState<string[]>([]);
-  const [selectedVariant, setSelectedVariant] = useState(0);
-  const [streamingText, setStreamingText] = useState('');
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [fullscreen, setFullscreen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'files' | 'terminal' | 'ai' | 'database' | 'auth' | 'deploy' | 'project'>('preview');
   const [showMultiFileWorkspace, setShowMultiFileWorkspace] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  // Get generated code from current variant
+  const generatedCode = currentVariants[selectedVariant]?.code || '';
   const [initialPromptProcessed, setInitialPromptProcessed] = useState(false);
   const [showFileTree, setShowFileTree] = useState(true);
   const [showSteps, setShowSteps] = useState(true);
@@ -256,14 +284,15 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
       ]
     }));
 
-    const fileMessage: Message = {
-      id: Date.now().toString() + '-file',
-      type: 'file',
-      content: `📁 Creating ${fileName}...`,
-      timestamp: new Date(),
-      metadata: { fileName, action: 'create' }
-    };
-    setMessages(prev => [...prev, fileMessage]);
+    // Skip file messages for now - store focuses on chat messages
+    // const fileMessage: Message = {
+    //   id: Date.now().toString() + '-file',
+    //   role: 'system',
+    //   type: 'file',
+    //   content: `📁 Creating ${fileName}...`,
+    //   timestamp: new Date(),
+    //   metadata: { fileName, action: 'create' }
+    // };
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -278,11 +307,12 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
   const simulateTerminalCommand = async (command: string, output: string[]) => {
     const terminalMessage: Message = {
       id: Date.now().toString() + '-terminal',
+      role: 'system',
       type: 'terminal',
       content: command,
       timestamp: new Date()
     };
-    setMessages(prev => [...prev, terminalMessage]);
+    addMessage(terminalMessage);
     
     setTerminalOutput(prev => [...prev, `$ ${command}`]);
     
@@ -302,12 +332,13 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
       if (step) {
         const stepMessage: Message = {
           id: Date.now().toString() + '-step',
+          role: 'system',
           type: 'step',
           content: `${step.title}: ${step.description}`,
           timestamp: new Date(),
           metadata: { step }
         };
-        setMessages(prev => [...prev, stepMessage]);
+        addMessage(stepMessage);
       }
     }
   };
@@ -318,18 +349,16 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      role: 'user',
       content: prompt,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    addMessage({ role: 'user', content: prompt });
     setPrompt('');
     setIsGenerating(true);
-    setGeneratedCode('');
-    setVariants([]);
-    setStreamingText('');
-    setSelectedVariant(0);
+    setStreamingContent('');
+    setCurrentVariants([]);
     setFileTree({ name: 'component', type: 'folder', children: [] });
     setTerminalOutput([]);
     setGenerationSteps(prev => prev.map(step => ({ ...step, status: 'pending', duration: undefined })));
@@ -359,13 +388,16 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
     }
 
     // Add assistant thinking message
-    const thinkingMessage: Message = {
-      id: Date.now().toString() + '-thinking',
-      type: 'assistant',
-      content: 'I\'m designing your component with 3 unique variations, implementing best practices, and ensuring accessibility...',
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, thinkingMessage]);
+    // const thinkingMessage: Message = {
+    //   id: Date.now().toString() + '-thinking',
+    //   role: 'assistant',
+    //   content: 'I\'m designing your component with 3 unique variations, implementing best practices, and ensuring accessibility...',
+    //   timestamp: new Date()
+    // };
+    addMessage({ 
+      role: 'assistant', 
+      content: '🤔 Analyzing your requirements and crafting the perfect component...' 
+    });
 
     try {
       const response = await fetch('/api/generate-ui-stream', {
@@ -398,28 +430,32 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
                 
                 if (data.type === 'content' && data.variant === 0) {
                   currentStreamingContent += data.content;
-                  setStreamingText(currentStreamingContent);
+                  setStreamingContent(currentStreamingContent);
                 }
                 
                 if (data.type === 'variant_complete') {
                   variantCodes[data.variant] = data.code;
-                  setVariants([...variantCodes.filter(c => c)]);
-                  if (data.variant === 0) {
-                    setGeneratedCode(data.code);
-                  }
+                  const variants = variantCodes.filter(c => c).map((code, index) => ({
+                    id: Date.now().toString() + '-' + index,
+                    prompt: prompt,
+                    code: code,
+                    timestamp: new Date(),
+                    variant: index
+                  }));
+                  setCurrentVariants(variants);
                   
                   // Add completion message for each variant
                   const variantMessage: Message = {
                     id: Date.now().toString() + `-variant-${data.variant}`,
-                    type: 'assistant',
+                    role: 'assistant',
                     content: `✨ ${VARIANTS[data.variant].name} variant completed with ${VARIANTS[data.variant].style.toLowerCase()} design!`,
                     timestamp: new Date(),
                     variant: data.variant
                   };
-                  setMessages(prev => [...prev, variantMessage]);
+                  addMessage(variantMessage);
                 }
-              } catch (e) {
-                console.error('Parse error:', e);
+              } catch {
+                // Parse error - ignore
               }
             }
           }
@@ -438,15 +474,18 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
         '  Accessibility score: 100/100'
       ]);
 
-      // Remove thinking message and add final message
-      setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
-      const finalMessage: Message = {
-        id: Date.now().toString() + '-complete',
-        type: 'assistant',
+      // Add final message with generated components
+      addMessage({
+        role: 'assistant',
         content: '🎉 Success! I\'ve created 3 unique variations of your component. Each variant is fully functional, accessible, and optimized for performance. Click on the variants above to explore different styles!',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, finalMessage]);
+        components: variantCodes.filter(c => c).map((code, index) => ({
+          id: `${Date.now()}-${index}`,
+          prompt,
+          code,
+          timestamp: new Date(),
+          variant: index
+        }))
+      });
       
       // Set first iteration
       setIterations([variantCodes[0]]);
@@ -456,13 +495,16 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
         icon: '✨',
       });
     } catch (error) {
-      const errorMessage: Message = {
-        id: Date.now().toString() + '-error',
-        type: 'system',
-        content: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // const errorMessage: Message = {
+      //   id: Date.now().toString() + '-error',
+      //   role: 'system',
+      //   content: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+      //   timestamp: new Date()
+      // };
+      addMessage({
+        role: 'system',
+        content: error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      });
       
       toast.error(error instanceof Error ? error.message : 'Something went wrong', {
         duration: 4000,
@@ -470,25 +512,33 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
       });
     } finally {
       setIsGenerating(false);
-      setStreamingText('');
+      setStreamingContent('');
     }
   };
 
   const handleIterate = async (feedback: string) => {
     // Simulate iteration process
-    const iterationMessage: Message = {
-      id: Date.now().toString() + '-iterate',
-      type: 'user',
-      content: `Iterate: ${feedback}`,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, iterationMessage]);
+    // const iterationMessage: Message = {
+    //   id: Date.now().toString() + '-iterate',
+    //   role: 'user',
+    //   content: `Iterate: ${feedback}`,
+    //   timestamp: new Date()
+    // };
+    addMessage({ role: 'user', content: `Iterate: ${feedback}` });
 
     // Add to iterations
-    const newCode = generatedCode + '\n// Iteration: ' + feedback;
+    const newCode = (currentVariants[0]?.code || '') + '\n// Iteration: ' + feedback;
     setIterations(prev => [...prev, newCode]);
     setCurrentIteration(iterations.length);
-    setGeneratedCode(newCode);
+    // Update the current variant's code
+    const updatedVariants = [...currentVariants];
+    if (updatedVariants[selectedVariant]) {
+      updatedVariants[selectedVariant] = {
+        ...updatedVariants[selectedVariant],
+        code: newCode
+      };
+      setCurrentVariants(updatedVariants);
+    }
   };
 
   const handleDeploy = async () => {
@@ -519,7 +569,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
   };
 
   const handleCopy = async () => {
-    const code = variants[selectedVariant] || generatedCode;
+    const code = currentVariants[selectedVariant]?.code || '';
     if (!code) return;
     
     try {
@@ -536,7 +586,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
   };
 
   const handleDownload = () => {
-    const code = variants[selectedVariant] || generatedCode;
+    const code = currentVariants[selectedVariant]?.code || '';
     if (!code) return;
     
     const blob = new Blob([code], { type: 'text/javascript' });
@@ -553,12 +603,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
   };
 
   const handleShare = async () => {
-    const shareUrl = `https://vrux.dev/share/${Date.now()}`;
-    await navigator.clipboard.writeText(shareUrl);
-    toast.success('Share link copied!', {
-      duration: 3000,
-      icon: '🔗',
-    });
+    setShowShareDialog(true);
   };
 
   // Device frames moved to ModernPreview component
@@ -801,7 +846,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
             </button>
             <LoadingButton
               onClick={handleDeploy}
-              disabled={!generatedCode}
+              disabled={currentVariants.length === 0}
               loading={isDeploying}
               loadingText="Deploying..."
               icon={<Rocket className="w-4 h-4" />}
@@ -858,19 +903,23 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
             messages.map((message) => (
               <ModernChatMessage
                 key={message.id}
-                message={message}
+                message={{
+                  ...message,
+                  type: message.role,
+                  variant: undefined
+                }}
                 darkMode={darkMode}
-                variant={message.variant !== undefined ? VARIANTS[message.variant] : undefined}
+                variant={undefined}
               />
             ))
           )}
           
-          {isGenerating && streamingText && (
+          {isGenerating && streamingContent && (
             <ModernChatMessage
               message={{
                 id: 'streaming',
-                type: 'assistant',
-                content: streamingText,
+                role: 'assistant',
+                content: streamingContent,
                 timestamp: new Date()
               }}
               darkMode={darkMode}
@@ -886,7 +935,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
         }`}>
           <div className="space-y-2">
             {/* Iteration buttons */}
-            {generatedCode && (
+            {currentVariants.length > 0 && (
               <div className="flex gap-2 mb-2">
                 <button
                   type="button"
@@ -936,7 +985,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
                     handleSubmit(e);
                   }
                 }}
-                placeholder={generatedCode ? "Ask for changes..." : "Describe your component..."}
+                placeholder={currentVariants.length > 0 ? "Ask for changes..." : "Describe your component..."}
                 className={`w-full px-4 py-3 pr-12 rounded-lg resize-none ${
                   darkMode 
                     ? 'bg-gray-800 text-white placeholder-gray-500 border-gray-700' 
@@ -1022,7 +1071,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
       {/* Code/Preview Panel */}
       <div className="flex-1 flex flex-col">
         {/* Variant Selector */}
-        {variants.length > 0 && (
+        {currentVariants.length > 0 && (
           <div className={`px-6 py-3 border-b ${
             darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'
           } flex items-center justify-between`}>
@@ -1030,8 +1079,8 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
               <AnimatedVariantSelector
                 variants={VARIANTS}
                 selectedVariant={selectedVariant}
-                onVariantSelect={setSelectedVariant}
-                generatedVariants={variants}
+                onVariantSelect={selectVariant}
+                generatedVariants={currentVariants}
                 darkMode={darkMode}
               />
               
@@ -1247,11 +1296,11 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
           </Tabs.List>
 
           <Tabs.Content value="preview" className="flex-1 overflow-hidden">
-            {isGenerating && !generatedCode ? (
+            {isGenerating && currentVariants.length === 0 ? (
               <PreviewSkeleton darkMode={darkMode} />
             ) : (
               <ModernPreview
-                code={variants[selectedVariant] || generatedCode}
+                code={currentVariants[selectedVariant]?.code || ''}
                 darkMode={darkMode}
                 deviceView={deviceView}
                 onDeviceChange={setDeviceView}
@@ -1263,9 +1312,9 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
 
           <Tabs.Content value="code" className="flex-1 overflow-hidden">
             <div className="h-full relative">
-              {isGenerating && !generatedCode ? (
+              {isGenerating && currentVariants.length === 0 ? (
                 <CodeEditorSkeleton darkMode={darkMode} />
-              ) : generatedCode ? (
+              ) : currentVariants.length > 0 ? (
                 <>
                   {/* Editor Header */}
                   <div className={`flex items-center justify-between px-4 py-2 border-b ${
@@ -1317,7 +1366,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
                   <div className="flex-1" style={{ height: 'calc(100% - 49px)' }}>
                     <Editor
                       language="javascript"
-                      value={variants[selectedVariant] || generatedCode}
+                      value={currentVariants[selectedVariant]?.code || ''}
                       theme={darkMode ? 'vs-dark' : 'light'}
                       options={{
                         minimap: { enabled: false },
@@ -1334,10 +1383,13 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
                         automaticLayout: true,
                       }}
                       onChange={(value) => {
-                        if (value && selectedVariant >= 0 && selectedVariant < variants.length) {
-                          const newVariants = [...variants];
-                          newVariants[selectedVariant] = value;
-                          setVariants(newVariants);
+                        if (value && selectedVariant >= 0 && selectedVariant < currentVariants.length) {
+                          const updatedVariants = currentVariants.map((v, i) => 
+                            i === selectedVariant 
+                              ? { ...v, code: value }
+                              : v
+                          );
+                          setCurrentVariants(updatedVariants);
                         }
                       }}
                     />
@@ -1455,19 +1507,19 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
 
           <Tabs.Content value="ai" className="flex-1 overflow-hidden">
             <IntelligentChatInterface
-              currentCode={variants[selectedVariant] || generatedCode}
+              currentCode={currentVariants[selectedVariant]?.code || ''}
               onGenerate={async (newPrompt: string) => {
                 setPrompt(newPrompt);
                 await handleSubmit({ preventDefault: () => {} } as React.FormEvent);
               }}
               onCodeUpdate={(newCode) => {
-                if (selectedVariant >= 0 && selectedVariant < variants.length) {
-                  const newVariants = [...variants];
-                  newVariants[selectedVariant] = newCode;
-                  setVariants(newVariants);
-                  if (selectedVariant === 0) {
-                    setGeneratedCode(newCode);
-                  }
+                if (selectedVariant >= 0 && selectedVariant < currentVariants.length) {
+                  const updatedVariants = currentVariants.map((v, i) => 
+                    i === selectedVariant 
+                      ? { ...v, code: newCode }
+                      : v
+                  );
+                  setCurrentVariants(updatedVariants);
                 }
               }}
               darkMode={darkMode}
@@ -1534,7 +1586,7 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
 
           <Tabs.Content value="deploy" className="flex-1 overflow-auto p-6">
             <DeploymentPanel
-              code={variants[selectedVariant] || generatedCode}
+              code={currentVariants[selectedVariant]?.code || ''}
               projectName={prompt.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}
               onDeploymentComplete={(result) => {
                 if (result.success && result.url) {
@@ -1604,6 +1656,14 @@ export default function AdvancedGenerationInterface({ darkMode }: AdvancedGenera
         </div>
       )}
     </div>
+      
+      {/* Share Dialog */}
+      <ShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        code={generatedCode}
+        title="My Generated Component"
+      />
     </>
   );
 }

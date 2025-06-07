@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
-import logger from '@/lib/logger';
+import logger from '../lib/client-logger';
 
 interface Props {
   children: ReactNode;
@@ -75,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </h2>
             
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              We encountered an unexpected error. The issue has been logged and we'll look into it.
+              We encountered an unexpected error. The issue has been logged and we&apos;ll look into it.
             </p>
 
             {/* Error details in development */}
@@ -141,8 +141,7 @@ interface ComponentErrorBoundaryProps {
 
 export function ComponentErrorBoundary({ 
   children, 
-  componentName = 'Component',
-  onError 
+  componentName = 'Component'
 }: ComponentErrorBoundaryProps) {
   return (
     <ErrorBoundary

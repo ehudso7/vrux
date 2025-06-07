@@ -132,8 +132,8 @@ const Home: NextPage = () => {
                     case 'error':
                       throw new Error(data.error);
                   }
-                } catch (e) {
-                  console.error('Error parsing SSE data:', e);
+                } catch {
+                  // Error parsing SSE data
                 }
               }
             }

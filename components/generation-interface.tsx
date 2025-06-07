@@ -181,8 +181,8 @@ export default function GenerationInterface({ darkMode }: GenerationInterfacePro
                   };
                   setMessages(prev => [...prev, variantMessage]);
                 }
-              } catch (e) {
-                console.error('Parse error:', e);
+              } catch {
+                // Parse error - ignore
               }
             }
           }

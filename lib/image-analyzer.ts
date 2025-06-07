@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { getAvailableProvider } from './ai-providers';
 import type OpenAI from 'openai';
+import logger from './logger';
 
 // Schema for image analysis results
 export const imageAnalysisSchema = z.object({
@@ -96,7 +97,7 @@ Return a valid JSON object matching the required schema.`;
       throw new Error('Image analysis not supported with current provider');
     }
   } catch (error) {
-    console.error('Image analysis error:', error);
+    logger.error('Image analysis error', error instanceof Error ? error : new Error(String(error)));
     throw new Error('Failed to analyze image');
   }
 }

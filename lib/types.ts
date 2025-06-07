@@ -71,7 +71,7 @@ export interface LogEntry {
   level: 'info' | 'warn' | 'error';
   message: string;
   environment: string;
-  pid: number;
+  pid?: number;
   [key: string]: unknown;
 }
 
@@ -109,6 +109,25 @@ export interface EnvironmentVariables {
   OPENAI_API_KEY: string;
   ANTHROPIC_API_KEY?: string;
   NODE_ENV: 'development' | 'production' | 'test';
+  NEXT_PUBLIC_APP_URL?: string;
+  VERCEL_TOKEN?: string;
+  NETLIFY_TOKEN?: string;
+  GITHUB_TOKEN?: string;
+  VIEWCOMFY_API_URL?: string;
+  VIEWCOMFY_INFER_URL?: string;
+  VIEWCOMFY_CLIENT_ID?: string;
+  VIEWCOMFY_CLIENT_SECRET?: string;
+  TEST_URL?: string;
+  SESSION_SECRET?: string;
+  RATE_LIMIT_WINDOW_MS?: string;
+  RATE_LIMIT_MAX_REQUESTS?: string;
+  MAX_GENERATION_TIME_MS?: string;
+  MAX_TOKENS?: string;
+  NEXT_PUBLIC_ENABLE_VIEWCOMFY?: string;
+  NEXT_PUBLIC_ENABLE_CACHE?: string;
+  NEXT_PUBLIC_ENABLE_QUALITY_CHECKS?: string;
+  VERCEL_API_URL?: string;
+  NETLIFY_API_URL?: string;
 }
 
 /**

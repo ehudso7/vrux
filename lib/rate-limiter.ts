@@ -1,7 +1,7 @@
 /**
  * Simple in-memory rate limiter for serverless environments
  */
-class RateLimiter {
+export class RateLimiter {
   private windowMs: number;
   private maxRequests: number;
   private requests: Map<string, number[]>;
@@ -63,12 +63,32 @@ class RateLimiter {
   /**
    * Get the reset time for rate limit
    */
-  getResetTime(identifier: string): Date | null {
+  getResetTime(identifier: string): Date {
     const timestamps = this.requests.get(identifier) || [];
-    if (timestamps.length === 0) return null;
+    if (timestamps.length === 0) {
+      return new Date(Date.now() + this.windowMs);
+    }
     
     const oldestTimestamp = Math.min(...timestamps);
     return new Date(oldestTimestamp + this.windowMs);
+  }
+
+  /**
+   * Get current requests for an identifier
+   */
+  getRequests(identifier: string): number[] {
+    this.cleanup();
+    
+    const now = Date.now();
+    const timestamps = this.requests.get(identifier) || [];
+    return timestamps.filter(ts => now - ts < this.windowMs);
+  }
+
+  /**
+   * Get the maximum number of requests allowed
+   */
+  getLimit(): number {
+    return this.maxRequests;
   }
 }
 

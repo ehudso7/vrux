@@ -103,8 +103,8 @@ const Home: NextPage = () => {
                     setGeneratedCode(data.code);
                   }
                 }
-              } catch (e) {
-                console.error('Parse error:', e);
+              } catch {
+                // Parse error - ignore
               }
             }
           }

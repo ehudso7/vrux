@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import { requireAdmin, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
 function handler(req: AuthenticatedRequest, res: NextApiResponse) {

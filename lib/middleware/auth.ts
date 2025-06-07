@@ -63,7 +63,7 @@ export function requireAuthWithApiLimit(
 
     // Track API usage after successful response
     const originalJson = res.json;
-    res.json = function(data: any) {
+    res.json = function<T>(data: T) {
       // Only increment if it's a successful response
       if (res.statusCode >= 200 && res.statusCode < 300) {
         authStore.incrementApiCalls(user.id);

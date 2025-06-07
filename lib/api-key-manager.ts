@@ -83,7 +83,7 @@ export class ApiKeyManager {
   ): { apiKey: string; keyId: string } {
     const keyId = crypto.randomUUID();
     const environment = process.env.NODE_ENV === 'production' ? 'live' : 'test';
-    const rawKey = crypto.randomBytes(this.constructor.KEY_LENGTH).toString('hex');
+    const rawKey = crypto.randomBytes(ApiKeyManager.KEY_LENGTH).toString('hex');
     const prefix = `${ApiKeyManager.KEY_PREFIX}_${environment}`;
     const fullKey = `${prefix}_${rawKey}`;
     

@@ -38,7 +38,8 @@ import {
   EyeOff,
   Settings,
   HelpCircle,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from 'lucide-react';
 import { LiveProvider, LiveError, LivePreview } from 'react-live';
 import Editor from '@monaco-editor/react';
@@ -264,8 +265,8 @@ const Home: NextPage = () => {
                     setGeneratedCode(data.code);
                   }
                 }
-              } catch (e) {
-                console.error('Parse error:', e);
+              } catch {
+                // Parse error - ignore
               }
             }
           }

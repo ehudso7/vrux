@@ -69,9 +69,8 @@ export function MultiFileWorkspace({
         icon: '🎉',
         duration: 3000
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to generate project');
-      console.error(error);
     } finally {
       setIsGenerating(false);
     }

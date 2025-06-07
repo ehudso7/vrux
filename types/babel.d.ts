@@ -5,8 +5,8 @@ declare module '@babel/traverse' {
     node: T;
     parent: Node;
     type: string;
-    scope: any;
-    loc: any;
+    scope: unknown;
+    loc: unknown;
     isIdentifier(): boolean;
     isCallExpression(): boolean;
     isMemberExpression(): boolean;
@@ -15,16 +15,16 @@ declare module '@babel/traverse' {
     isFunctionDeclaration(): boolean;
     isArrowFunctionExpression(): boolean;
     isExportDefaultDeclaration(): boolean;
-    traverse(visitor: any): void;
+    traverse(visitor: Record<string, unknown>): void;
   }
   
   export interface TraverseOptions {
-    scope?: any;
-    state?: any;
+    scope?: unknown;
+    state?: unknown;
     parentPath?: NodePath;
   }
   
-  export default function traverse(ast: Node, visitor: any, scope?: any, state?: any, parentPath?: NodePath): void;
+  export default function traverse(ast: Node, visitor: Record<string, unknown>, scope?: unknown, state?: unknown, parentPath?: NodePath): void;
 }
 
 declare module '@babel/generator' {
@@ -42,7 +42,7 @@ declare module '@babel/generator' {
   
   interface GeneratorResult {
     code: string;
-    map?: any;
+    map?: unknown;
   }
   
   export default function generate(ast: Node, options?: GeneratorOptions): GeneratorResult;

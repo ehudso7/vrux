@@ -20,8 +20,8 @@ export default function ViewComfyDemo() {
 		reset
 	} = useViewComfy({
 		useStreaming: true,
-		onSuccess: (outputs) => {
-			console.log('Generation successful:', outputs)
+		onSuccess: () => {
+			// Generation successful
 		}
 	})
 

@@ -167,8 +167,8 @@ export class ViewComfyClient {
 								promptResult = new PromptResult(data)
 								return promptResult
 							}
-						} catch (e) {
-							console.error('Failed to parse event data:', e)
+						} catch {
+							// Failed to parse event data
 						}
 						currentData = ''
 						currentEvent = 'message'

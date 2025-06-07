@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import { analyzeImage, generatePromptFromAnalysis } from '../../lib/image-analyzer';
 import rateLimiter from '../../lib/rate-limiter';
 import cors, { runMiddleware } from '../../lib/cors';
@@ -6,6 +6,7 @@ import requestLogger from '../../lib/middleware/request-logger';
 import logger from '../../lib/logger';
 import { z } from 'zod';
 import { validateDomain } from '../../lib/domain-restriction';
+import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
 const requestSchema = z.object({
   image: z.string().min(1),
@@ -13,7 +14,7 @@ const requestSchema = z.object({
 });
 
 async function analyzeImageHandler(
-  req: NextApiRequest,
+  req: AuthenticatedRequest,
   res: NextApiResponse
 ) {
   await runMiddleware(req, res, cors);
@@ -80,7 +81,7 @@ async function analyzeImageHandler(
 }
 
 // Apply domain restriction inside the handler
-async function protectedAnalyzeImageHandler(req: NextApiRequest, res: NextApiResponse) {
+async function protectedAnalyzeImageHandler(req: AuthenticatedRequest, res: NextApiResponse) {
   const validation = validateDomain(req);
   if (!validation.isValid) {
     return res.status(403).json({
@@ -92,4 +93,4 @@ async function protectedAnalyzeImageHandler(req: NextApiRequest, res: NextApiRes
   return analyzeImageHandler(req, res);
 }
 
-export default requestLogger(protectedAnalyzeImageHandler);
+export default requireAuthWithApiLimit(requestLogger(protectedAnalyzeImageHandler));

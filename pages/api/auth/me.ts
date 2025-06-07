@@ -1,12 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authStore } from '../../../lib/auth-store';
+import logger from '../../../lib/logger';
+import { requireDomain } from '../../../lib/domain-restriction';
+import { withAuthRateLimit } from '../../../lib/auth-rate-limiter';
 
-export default async function handler(
+async function meHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method Not Allowed',
+      message: 'Invalid request method',
+      code: 'METHOD_NOT_ALLOWED'
+    });
   }
 
   try {
@@ -14,19 +21,32 @@ export default async function handler(
     const sessionId = req.cookies.session;
     
     if (!sessionId) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'NOT_AUTHENTICATED'
+      });
     }
 
     // Get session
     const session = authStore.getSession(sessionId);
     if (!session) {
-      return res.status(401).json({ message: 'Session expired' });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'SESSION_EXPIRED'
+      });
     }
 
     // Get user
     const user = authStore.findUserById(session.userId);
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      logger.error('User not found for valid session', new Error('User not found'), { sessionId, userId: session.userId });
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Authentication required',
+        code: 'USER_NOT_FOUND'
+      });
     }
 
     // Return user data (without password)
@@ -39,7 +59,17 @@ export default async function handler(
       apiCalls: user.apiCalls,
       maxApiCalls: user.maxApiCalls,
     });
-  } catch {
-    res.status(500).json({ message: 'Internal server error' });
+  } catch (error) {
+    logger.error('Get user error', error instanceof Error ? error : new Error(String(error)));
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An error occurred while fetching user data',
+      code: 'INTERNAL_ERROR'
+    });
   }
 }
+
+// Apply domain restriction and standard rate limiting
+export default requireDomain(
+  withAuthRateLimit(meHandler, 'standard')
+);

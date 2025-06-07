@@ -15,7 +15,8 @@ import * as Avatar from '@radix-ui/react-avatar';
 interface ChatMessageProps {
   message: {
     id: string;
-    type: 'user' | 'assistant' | 'system' | 'file' | 'terminal' | 'step';
+    role?: 'user' | 'assistant' | 'system';
+    type?: 'user' | 'assistant' | 'system' | 'file' | 'terminal' | 'step';
     content: string;
     timestamp: Date;
     variant?: number;
@@ -65,7 +66,8 @@ const typeConfig = {
 };
 
 export default function ModernChatMessage({ message, darkMode, variant }: ChatMessageProps) {
-  const config = typeConfig[message.type];
+  const messageType = message.type || message.role || 'user';
+  const config = typeConfig[messageType];
   const Icon = config.icon;
 
   return (

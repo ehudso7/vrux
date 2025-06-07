@@ -5,7 +5,7 @@ import { describe, it, expect } from '@jest/globals';
 import type { GenerateUIRequest, GenerateUIResponse, GenerateUIError } from '../lib/types';
 
 describe('API Endpoints', () => {
-  const baseUrl = process.env.TEST_URL || 'http://localhost:3000';
+  const baseUrl = process.env.TEST_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   describe('GET /api/health', () => {
     it('should return healthy status', async () => {

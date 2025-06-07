@@ -2,15 +2,18 @@ import { createHash, randomBytes } from 'crypto';
 
 // In-memory user store for demo purposes
 // In production, this would be a real database
-interface StoredUser {
+export interface User {
   id: string;
   email: string;
-  passwordHash: string;
   name: string;
   createdAt: Date;
   plan: 'free' | 'pro' | 'enterprise';
   apiCalls: number;
   maxApiCalls: number;
+}
+
+interface StoredUser extends User {
+  passwordHash: string;
 }
 
 interface Session {
@@ -103,6 +106,19 @@ class AuthStore {
 
   deleteSession(sessionId: string): void {
     this.sessions.delete(sessionId);
+  }
+
+  validateSession(sessionId: string): User | null {
+    const session = this.getSession(sessionId);
+    if (!session) return null;
+
+    const user = this.findUserById(session.userId);
+    if (!user) return null;
+
+    // Return user without password hash
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   updateUser(userId: string, data: Partial<StoredUser>): StoredUser | null {

@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiResponse } from 'next'
 import { ViewComfyClient } from '../../lib/viewcomfy-client'
 import rateLimiter from '../../lib/rate-limiter'
 import cors, { runMiddleware } from '../../lib/cors'
@@ -8,9 +8,10 @@ import performanceMonitor from '../../lib/performance'
 import { createUIGenerationParams } from '../../lib/viewcomfy-utils'
 import type { ViewComfyGenerateRequest, ViewComfyGenerateResponse } from '../../lib/types'
 import { validateDomain } from '../../lib/domain-restriction'
+import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth'
 
-// Extend NextApiRequest to include custom properties
-interface ExtendedNextApiRequest extends NextApiRequest {
+// Extend AuthenticatedRequest to include custom properties
+interface ExtendedNextApiRequest extends AuthenticatedRequest {
 	id?: string
 }
 
@@ -172,4 +173,4 @@ async function generateViewComfyHandler(
 	}
 }
 
-export default requestLogger(generateViewComfyHandler);
+export default requireAuthWithApiLimit(requestLogger(generateViewComfyHandler));

@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authStore } from '../../../lib/auth-store';
 import logger from '../../../lib/logger';
+import { requireDomain } from '../../../lib/domain-restriction';
+import { withAuthRateLimit, logFailedAuth, getUserIdentifier } from '../../../lib/auth-rate-limiter';
 
-export default async function handler(
+async function signinHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -14,18 +16,34 @@ export default async function handler(
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid request parameters',
+        code: 'INVALID_REQUEST'
+      });
     }
 
     // Find user
     const user = authStore.findUserByEmail(email);
+    const identifier = getUserIdentifier(req);
+    
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      logFailedAuth('signin', identifier, 'user_not_found', { email });
+      return res.status(401).json({ 
+        error: 'Authentication Failed',
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS'
+      });
     }
 
     // Verify password
     if (!authStore.verifyPassword(user, password)) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      logFailedAuth('signin', identifier, 'invalid_password', { email, userId: user.id });
+      return res.status(401).json({ 
+        error: 'Authentication Failed',
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS'
+      });
     }
 
     // Create session
@@ -53,6 +71,33 @@ export default async function handler(
     });
   } catch (error) {
     logger.error('Sign in error', error instanceof Error ? error : new Error(String(error)));
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An error occurred during authentication',
+      code: 'INTERNAL_ERROR'
+    });
   }
 }
+
+// Apply domain restriction and rate limiting
+// Fixed handler with proper error handling
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  try {
+    // In development, skip domain restriction
+    if (process.env.NODE_ENV === 'development') {
+      return await withAuthRateLimit(signinHandler, 'signin')(req, res);
+    }
+    // In production, apply domain restriction
+    return await requireDomain(withAuthRateLimit(signinHandler, 'signin'))(req, res);
+  } catch (error) {
+    // Always return JSON for API errors
+    logger.error('Signin endpoint error', error as Error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to process signin request',
+      code: 'SIGNIN_ERROR'
+    });
+  }
+};
+
+export default handler;

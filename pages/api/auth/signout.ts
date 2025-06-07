@@ -1,13 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authStore } from '../../../lib/auth-store';
 import logger from '../../../lib/logger';
+import { requireDomain } from '../../../lib/domain-restriction';
+import { withAuthRateLimit } from '../../../lib/auth-rate-limiter';
 
-export default async function handler(
+async function signoutHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ 
+      error: 'Method Not Allowed',
+      message: 'Invalid request method',
+      code: 'METHOD_NOT_ALLOWED'
+    });
   }
 
   try {
@@ -29,9 +35,21 @@ export default async function handler(
 
     logger.info('User signed out');
 
-    res.status(200).json({ message: 'Signed out successfully' });
+    res.status(200).json({ 
+      success: true,
+      message: 'Signed out successfully' 
+    });
   } catch (error) {
     logger.error('Sign out error', error instanceof Error ? error : new Error(String(error)));
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An error occurred during sign out',
+      code: 'INTERNAL_ERROR'
+    });
   }
 }
+
+// Apply domain restriction and standard rate limiting
+export default requireDomain(
+  withAuthRateLimit(signoutHandler, 'standard')
+);
