@@ -22,6 +22,11 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Use Render-specific config if on Render
+RUN if [ "$RENDER" = "true" ]; then \
+      cp next.config.render.ts next.config.ts; \
+    fi
+
 # Build the application
 RUN npm run build
 
@@ -36,10 +41,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files
+# Copy the entire app (simpler approach)
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
 
 # Create logs directory and set permissions
 RUN mkdir -p logs && chown -R nextjs:nodejs logs
@@ -50,5 +57,5 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-# Run the application
-CMD ["node", "server.js"]
+# Run the application with Next.js
+CMD ["npm", "start"]

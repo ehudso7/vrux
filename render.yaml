@@ -1,12 +1,12 @@
 services:
   - type: web
     name: vrux
-    runtime: node
+    runtime: docker
     branch: main
     region: oregon
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
@@ -14,6 +14,8 @@ services:
         value: production
       - key: NODE_OPTIONS
         value: --max-old-space-size=8192
+      - key: RENDER
+        value: true
       - key: PORT
         fromGroup: vrux-env
       - key: OPENAI_API_KEY
