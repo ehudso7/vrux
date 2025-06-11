@@ -14,30 +14,30 @@ export const Footer: React.FC<FooterProps> = ({ darkMode = false }) => {
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <li><Link href="/features"><a className="hover:text-purple-600">Features</a></Link></li>
-              <li><Link href="/pricing"><a className="hover:text-purple-600">Pricing</a></Link></li>
-              <li><Link href="/templates"><a className="hover:text-purple-600">Templates</a></Link></li>
-              <li><Link href="/examples"><a className="hover:text-purple-600">Examples</a></Link></li>
+              <li><Link href="/features" className="hover:text-purple-600">Features</Link></li>
+              <li><Link href="/pricing" className="hover:text-purple-600">Pricing</Link></li>
+              <li><Link href="/templates" className="hover:text-purple-600">Templates</Link></li>
+              <li><Link href="/examples" className="hover:text-purple-600">Examples</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <li><Link href="/documentation"><a className="hover:text-purple-600">Documentation</a></Link></li>
-              <li><Link href="/api-reference"><a className="hover:text-purple-600">API Reference</a></Link></li>
-              <li><Link href="/blog"><a className="hover:text-purple-600">Blog</a></Link></li>
-              <li><Link href="/community"><a className="hover:text-purple-600">Community</a></Link></li>
+              <li><Link href="/documentation" className="hover:text-purple-600">Documentation</Link></li>
+              <li><Link href="/api-reference" className="hover:text-purple-600">API Reference</Link></li>
+              <li><Link href="/blog" className="hover:text-purple-600">Blog</Link></li>
+              <li><Link href="/community" className="hover:text-purple-600">Community</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <li><Link href="/about"><a className="hover:text-purple-600">About</a></Link></li>
-              <li><Link href="/privacy"><a className="hover:text-purple-600">Privacy</a></Link></li>
-              <li><Link href="/terms"><a className="hover:text-purple-600">Terms</a></Link></li>
-              <li><Link href="/contact"><a className="hover:text-purple-600">Contact</a></Link></li>
+              <li><Link href="/about" className="hover:text-purple-600">About</Link></li>
+              <li><Link href="/privacy" className="hover:text-purple-600">Privacy</Link></li>
+              <li><Link href="/terms" className="hover:text-purple-600">Terms</Link></li>
+              <li><Link href="/contact" className="hover:text-purple-600">Contact</Link></li>
             </ul>
           </div>
           
