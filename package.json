@@ -31,7 +31,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
+    "build:vercel": "npm run build",
     "start": "next start",
     "lint": "next lint",
     "check-env": "node scripts/check-env.js",
@@ -40,7 +41,8 @@
     "test:ci": "npm test",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
-    "prepare": "echo 'Setup complete'"
+    "prepare": "echo 'Setup complete'",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
@@ -109,6 +111,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "critters": "^0.0.23",
     "dotenv": "^16.5.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
