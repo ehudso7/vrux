@@ -2,22 +2,22 @@
   "framework": "nextjs",
   "build": {
     "env": {
-      "NODE_OPTIONS": "--max-old-space-size=8192",
+      "NODE_OPTIONS": "--max-old-space-size=4096",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },
   "functions": {
-    "pages/api/**/*.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+    "pages/api/generate-ui-stream.ts": {
+      "maxDuration": 60
+    },
+    "pages/api/generate-viewcomfy-stream.ts": {
+      "maxDuration": 60
     },
     "pages/api/generate-*.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+      "maxDuration": 30
     },
-    "pages/api/ws/*.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+    "pages/api/**/*.ts": {
+      "maxDuration": 10
     }
   },
   "regions": ["iad1"],
@@ -27,6 +27,34 @@
     {
       "source": "/api/health",
       "destination": "/api/health-check"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
     }
   ]
 }
