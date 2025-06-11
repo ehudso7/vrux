@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth-context';
 import { signUpSchema, type SignUpInput } from '../lib/validation';
 import confetti from 'canvas-confetti';
 
-export default function SignUp() {
+export default function SignUpEnhanced() {
   const { signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
