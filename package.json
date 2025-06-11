@@ -42,7 +42,10 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
     "prepare": "echo 'Setup complete'",
-    "postinstall": "echo 'Dependencies installed successfully'"
+    "postinstall": "echo 'Dependencies installed successfully'",
+    "deploy": "node scripts/trigger-deploy.js all",
+    "deploy:vercel": "node scripts/trigger-deploy.js vercel",
+    "deploy:render": "node scripts/trigger-deploy.js render"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",

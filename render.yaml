@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: vrux
+    runtime: node
+    branch: main
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=8192
+      - key: PORT
+        fromGroup: vrux-env
+      - key: OPENAI_API_KEY
+        fromGroup: vrux-env
+      - key: ANTHROPIC_API_KEY
+        fromGroup: vrux-env
+      - key: VIEWCOMFY_API_URL
+        fromGroup: vrux-env
+      - key: VIEWCOMFY_CLIENT_ID
+        fromGroup: vrux-env
+      - key: VIEWCOMFY_CLIENT_SECRET
+        fromGroup: vrux-env
+      - key: SESSION_SECRET
+        fromGroup: vrux-env
+      - key: DATADOG_API_KEY
+        fromGroup: vrux-env
+      - key: NEWRELIC_LICENSE_KEY
+        fromGroup: vrux-env
+      - key: ALLOWED_DOMAINS
+        value: vrux.dev,www.vrux.dev
+      - key: NEXT_PUBLIC_API_URL
+        value: https://vrux.onrender.com
