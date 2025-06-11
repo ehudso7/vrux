@@ -6,7 +6,7 @@ import logger from '../../lib/logger';
 import performanceMonitor from '../../lib/performance';
 import type { GenerateUIResponse, GenerateUIError } from '../../lib/types';
 import { promptSchema, validateGeneratedComponent, securityHeaders } from '../../lib/ai-validation';
-import { getAvailableProvider } from '../../lib/ai-providers';
+import { getAvailableProvider, type AIGenerationResult } from '../../lib/ai-providers';
 import { validateDomain } from '../../lib/domain-restriction';
 import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth';
 
@@ -113,10 +113,10 @@ async function generateUIHandler(
     performanceMonitor.startTimer('aiGeneration');
     
     let provider = await getAvailableProvider();
-    let code: string;
+    let result: AIGenerationResult;
     
     try {
-      code = await provider.generateComponent(prompt, systemPrompt);
+      result = await provider.generateComponent(prompt, systemPrompt);
     } catch (error) {
       // Handle provider failures with fallback
       const errorStatus = (error as { status?: number }).status;
@@ -129,35 +129,35 @@ async function generateUIHandler(
         if (anthropicProvider.isAvailable()) {
           try {
             provider = anthropicProvider;
-            code = await provider.generateComponent(prompt, systemPrompt);
+            result = await provider.generateComponent(prompt, systemPrompt);
           } catch {
             // If Anthropic also fails, use mock
             logger.warn('Anthropic also failed, using mock provider');
             provider = mockProvider;
-            code = await provider.generateComponent(prompt, systemPrompt);
+            result = await provider.generateComponent(prompt, systemPrompt);
           }
         } else {
           // Use mock if Anthropic not available
           provider = mockProvider;
-          code = await provider.generateComponent(prompt, systemPrompt);
+          result = await provider.generateComponent(prompt, systemPrompt);
         }
       } else if (provider.name === 'Anthropic' && (errorStatus === 400 || errorMessage.includes('credit'))) {
         // If Anthropic fails with credit error, use mock
         logger.warn('Anthropic credit issue, using mock provider');
         const { mockProvider } = await import('../../lib/ai-providers');
         provider = mockProvider;
-        code = await provider.generateComponent(prompt, systemPrompt);
+        result = await provider.generateComponent(prompt, systemPrompt);
       } else {
         throw error;
       }
     }
 
-    if (!code) {
+    if (!result || !result.content) {
       throw new Error('No response generated');
     }
 
     // Clean up the response - remove markdown code blocks if present
-    const cleanedCode = code
+    const cleanedCode = result.content
       .replace(/^```(?:jsx?|javascript|tsx?|typescript)?\n?/gm, '')
       .replace(/```$/gm, '')
       .trim();
@@ -173,8 +173,8 @@ async function generateUIHandler(
       });
       
       // Retry with stricter prompt
-      const retryCode = await provider.generateComponent(`${prompt}. Ensure the component has proper imports, exports, and contains no harmful code.`, systemPrompt);
-      const cleanedRetryCode = retryCode
+      const retryResult = await provider.generateComponent(`${prompt}. Ensure the component has proper imports, exports, and contains no harmful code.`, systemPrompt);
+      const cleanedRetryCode = retryResult.content
         .replace(/^```(?:jsx?|javascript|tsx?|typescript)?\n?/gm, '')
         .replace(/```$/gm, '')
         .trim();
@@ -222,7 +222,7 @@ async function generateUIHandler(
     const generationTime = performanceMonitor.endTimer('aiGeneration', {
       promptLength: prompt.length,
       responseLength: cleanedCode.length,
-      tokensUsed: 0
+      tokensUsed: result.metrics.totalTokens
     });
     
     // Log successful generation
@@ -230,8 +230,8 @@ async function generateUIHandler(
       requestId: req.id,
       promptLength: prompt.length,
       responseLength: cleanedCode.length,
-      model: provider.name,
-      tokensUsed: 0,
+      model: result.metrics.model,
+      tokensUsed: result.metrics.totalTokens,
       generationTime: generationTime ? `${generationTime.toFixed(2)}ms` : 'unknown'
     });
 
@@ -239,9 +239,9 @@ async function generateUIHandler(
       code: finalCode,
       provider: provider.name,
       usage: {
-        prompt_tokens: 0,
-        completion_tokens: 0,
-        total_tokens: 0
+        prompt_tokens: result.metrics.promptTokens,
+        completion_tokens: result.metrics.completionTokens,
+        total_tokens: result.metrics.totalTokens
       },
       remainingRequests: rateLimiter.getRemainingRequests(identifier)
     });

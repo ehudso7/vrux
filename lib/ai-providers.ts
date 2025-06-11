@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import logger from './logger';
 import crypto from 'crypto';
+import telemetry from './telemetry';
 
 // Provider configuration with enhanced error handling
 const PROVIDER_CONFIG = {
@@ -181,18 +182,36 @@ export const openAIProvider: AIProvider = {
     
     const start = Date.now();
     const cacheKey = requestCache.generateKey(prompt, systemPrompt, options);
+    const traceId = telemetry.createTrace('ai.generation');
+    const spanId = telemetry.startSpan('openai.completion', traceId);
     
     // Check cache first
     if (options?.cache !== false) {
       const cached = requestCache.get(cacheKey);
       if (cached) {
         logger.info('OpenAI cache hit', { cacheKey, requestId: options?.requestId });
+        telemetry.track('cache.hit', { provider: 'OpenAI', cacheKey }, { requestId: options?.requestId });
+        telemetry.endSpan(spanId, 'completed');
         return cached;
       }
     }
     
+    telemetry.track('cache.miss', { provider: 'OpenAI', cacheKey }, { requestId: options?.requestId });
+    
     try {
+      telemetry.track('ai.inference.start', {
+        provider: 'OpenAI',
+        prompt: prompt.substring(0, 100),
+        cacheKey,
+      }, {
+        requestId: options?.requestId,
+        userId: options?.userId,
+      });
+
       const model = options?.model || 'gpt-4o';
+      telemetry.addSpanAttribute(spanId, 'model', model);
+      telemetry.addSpanAttribute(spanId, 'temperature', options?.temperature ?? 0.7);
+      
       const completion = await openai.chat.completions.create({
         model,
         messages: [
@@ -238,12 +257,35 @@ export const openAIProvider: AIProvider = {
         ...result.metrics 
       });
       
+      telemetry.track('ai.inference.complete', {
+        provider: 'OpenAI',
+        model,
+        quality,
+        cached: false,
+      }, {
+        requestId: options?.requestId,
+        userId: options?.userId,
+        metrics: result.metrics,
+      });
+      
+      telemetry.endSpan(spanId, 'completed');
       return result;
     } catch (error) {
       logger.error('OpenAI generation failed', error as Error, {
         requestId: options?.requestId,
         prompt: prompt.substring(0, 100),
       });
+      
+      telemetry.track('ai.inference.error', {
+        provider: 'OpenAI',
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.name : 'Unknown',
+      }, {
+        requestId: options?.requestId,
+        userId: options?.userId,
+      });
+      
+      telemetry.endSpan(spanId, 'error');
       throw error;
     }
   },
@@ -788,7 +830,12 @@ export async function getAvailableProvider(preferredProvider?: string): Promise<
       if (isAvailable) {
         const health = await provider.getHealth();
         if (health.available) {
-          logger.info(`Selected provider: ${provider.name}`, health);
+          logger.info(`Selected provider: ${provider.name}`, {
+            available: health.available,
+            latency: health.latency,
+            error: health.error,
+            lastChecked: health.lastChecked.toISOString()
+          });
           return provider;
         }
       }

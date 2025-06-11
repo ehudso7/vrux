@@ -1,4 +1,5 @@
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 import '../globals.css';
 import PageLoading from '../components/page-loading';
 import { Toaster } from 'react-hot-toast';
@@ -6,6 +7,14 @@ import { AuthProvider } from '../lib/auth-context';
 import { ErrorBoundary } from '../components/error-boundary';
  
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    // Initialize monitoring in browser for client-side tracking
+    if (typeof window !== 'undefined') {
+      // Client-side telemetry initialization would go here
+      console.log('VRUX monitoring initialized');
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>

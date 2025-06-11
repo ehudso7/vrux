@@ -186,7 +186,9 @@ class MonitoringService {
     const fidObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'first-input') {
-          const delay = entry.processingStart - entry.startTime;
+          // Type assertion for first-input entries which have processingStart
+          const firstInputEntry = entry as PerformanceEntry & { processingStart: number };
+          const delay = firstInputEntry.processingStart - firstInputEntry.startTime;
           this.recordMetric({
             name: 'webvitals.fid',
             value: delay,

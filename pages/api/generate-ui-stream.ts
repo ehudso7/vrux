@@ -80,8 +80,6 @@ async function generateUIStreamHandler(
     });
   }
 
-  const { prompt, variants = 3 } = req.body;
-
   // Enhanced input validation
   const inputSchema = z.object({
     prompt: z.string().min(1).max(1000).trim(),
@@ -111,7 +109,7 @@ async function generateUIStreamHandler(
   const hasAvailableProvider = Object.values(providersHealth).some(h => h.available);
   
   if (!hasAvailableProvider) {
-    logger.error('No AI providers available', providersHealth);
+    logger.error('No AI providers available', null, { providersHealth });
     return res.status(503).json({ 
       error: 'AI service temporarily unavailable',
       message: 'All AI providers are currently offline. Please try again later.',
@@ -128,7 +126,7 @@ async function generateUIStreamHandler(
 
   // Generate request ID for tracking
   const requestId = crypto.randomUUID();
-  const userId = req.userId || identifier;
+  const userId = req.user?.id || identifier;
   
   try {
     performanceMonitor.startTimer('aiStreamGeneration');
@@ -250,7 +248,7 @@ async function generateUIStreamHandler(
 
     const generationTime = performanceMonitor.endTimer('aiStreamGeneration', {
       promptLength: prompt.length,
-      variantCount: variants
+      variantCount: variantCount
     });
 
     logger.info('UI stream generated successfully', {

@@ -144,12 +144,20 @@ export default async function healthHandler(
       const monitoringMetrics = monitoring.getMetricsSummary(300000);
       
       health.metrics = {
-        requestsPerMinute: perfMetrics.requestCount || 0,
-        averageResponseTime: monitoringMetrics['timer.aiGeneration']?.avg || 0,
-        errorRate: (errorSummary.total / (perfMetrics.requestCount || 1)) * 100,
-        p95ResponseTime: monitoringMetrics['timer.aiGeneration']?.p95 || 0,
-        p99ResponseTime: monitoringMetrics['timer.aiGeneration']?.p99 || 0,
-        activeConnections: 42, // Mock for demo
+        requestsPerMinute: perfMetrics.requests.requestsPerMinute,
+        averageResponseTime: perfMetrics.requests.avgResponseTime || monitoringMetrics['timer.aiGeneration']?.avg || 0,
+        errorRate: perfMetrics.requests.errorRate,
+        p95ResponseTime: perfMetrics.requests.percentiles.p95 || monitoringMetrics['timer.aiGeneration']?.p95 || 0,
+        p99ResponseTime: perfMetrics.requests.percentiles.p99 || monitoringMetrics['timer.aiGeneration']?.p99 || 0,
+        activeConnections: perfMetrics.activeOperations.length,
+      };
+      
+      // Add extended metrics for god-tier observability
+      (health as any).extendedMetrics = {
+        memoryUsage: perfMetrics.memory.heapUsagePercent,
+        cpuTime: perfMetrics.cpu.totalSeconds,
+        gcStats: perfMetrics.gc,
+        operationStats: perfMetrics.operations
       };
     }
 

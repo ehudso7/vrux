@@ -46,3 +46,6 @@ fix_all.sh
 # Docker env files
 .env.docker
 docker-compose.override.yml
+
+# Local Netlify folder
+.netlify

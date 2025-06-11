@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import type { HealthCheckResponse } from '../../lib/types';
 import { requireAuth, type AuthenticatedRequest } from '../../lib/middleware/auth';
+import '../../lib/server-init'; // Ensure monitoring is initialized
 
 /**
  * Health check endpoint for monitoring

@@ -39,6 +39,11 @@ type NextApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<voi
 class PerformanceMonitor {
   private metrics: Map<string, Metric>;
   private thresholds: PerformanceThresholds;
+  private requestCount: number = 0;
+  private errorCount: number = 0;
+  private responseTimeHistory: number[] = [];
+  private operationStats: Map<string, { count: number; totalTime: number; errors: number }> = new Map();
+  private gcStats: { count: number; totalTime: number } = { count: 0, totalTime: 0 };
 
   constructor() {
     this.metrics = new Map();
@@ -47,6 +52,13 @@ class PerformanceMonitor {
       aiGeneration: 10000, // 10 seconds
       memoryUsage: 500 * 1024 * 1024, // 500MB
     };
+    this.initializeGCTracking();
+  }
+
+  private initializeGCTracking(): void {
+    // GC tracking would require --expose-gc flag
+    // For now, we'll skip this advanced feature to avoid type conflicts
+    // In production, you'd run Node with --expose-gc and properly type the global
   }
 
   /**
@@ -69,6 +81,22 @@ class PerformanceMonitor {
     const duration = Number(endTime - metric.startTime) / 1e6; // Convert to milliseconds
     
     this.metrics.delete(operationName);
+
+    // Update operation statistics
+    const stats = this.operationStats.get(operationName) || { count: 0, totalTime: 0, errors: 0 };
+    stats.count++;
+    stats.totalTime += duration;
+    this.operationStats.set(operationName, stats);
+
+    // Track response times for percentile calculations
+    if (operationName === 'apiResponse') {
+      this.requestCount++;
+      this.responseTimeHistory.push(duration);
+      // Keep only last 1000 entries for memory efficiency
+      if (this.responseTimeHistory.length > 1000) {
+        this.responseTimeHistory.shift();
+      }
+    }
 
     // Log performance data
     const perfData = {
@@ -142,6 +170,108 @@ class PerformanceMonitor {
           statusCode: res.statusCode
         });
       }
+    };
+  }
+
+  /**
+   * Track errors
+   */
+  recordError(operationName: string): void {
+    this.errorCount++;
+    const stats = this.operationStats.get(operationName) || { count: 0, totalTime: 0, errors: 0 };
+    stats.errors++;
+    this.operationStats.set(operationName, stats);
+  }
+
+  /**
+   * Calculate percentiles from response times
+   */
+  private calculatePercentile(data: number[], percentile: number): number {
+    if (data.length === 0) return 0;
+    const sorted = [...data].sort((a, b) => a - b);
+    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+    return sorted[index] || 0;
+  }
+
+  /**
+   * Get comprehensive metrics
+   */
+  getMetrics(): Record<string, any> {
+    const now = Date.now();
+    const uptime = process.uptime();
+    const memoryUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+
+    // Calculate response time percentiles
+    const p50 = this.calculatePercentile(this.responseTimeHistory, 50);
+    const p75 = this.calculatePercentile(this.responseTimeHistory, 75);
+    const p95 = this.calculatePercentile(this.responseTimeHistory, 95);
+    const p99 = this.calculatePercentile(this.responseTimeHistory, 99);
+
+    // Calculate average response time
+    const avgResponseTime = this.responseTimeHistory.length > 0
+      ? this.responseTimeHistory.reduce((a, b) => a + b, 0) / this.responseTimeHistory.length
+      : 0;
+
+    // Calculate operation-specific metrics
+    const operationMetrics: Record<string, any> = {};
+    this.operationStats.forEach((stats, operation) => {
+      operationMetrics[operation] = {
+        count: stats.count,
+        avgDuration: stats.count > 0 ? stats.totalTime / stats.count : 0,
+        totalTime: stats.totalTime,
+        errors: stats.errors,
+        errorRate: stats.count > 0 ? (stats.errors / stats.count) * 100 : 0
+      };
+    });
+
+    return {
+      system: {
+        uptime: uptime,
+        uptimeHuman: `${(uptime / 3600).toFixed(2)} hours`,
+        timestamp: now,
+        nodeVersion: process.version,
+        platform: process.platform,
+        pid: process.pid,
+        environment: process.env.NODE_ENV || 'development'
+      },
+      requests: {
+        total: this.requestCount,
+        errors: this.errorCount,
+        errorRate: this.requestCount > 0 ? (this.errorCount / this.requestCount) * 100 : 0,
+        requestsPerMinute: uptime > 60 ? (this.requestCount / (uptime / 60)) : this.requestCount,
+        avgResponseTime: avgResponseTime,
+        percentiles: {
+          p50: p50,
+          p75: p75,
+          p95: p95,
+          p99: p99
+        }
+      },
+      memory: {
+        heapUsed: memoryUsage.heapUsed,
+        heapTotal: memoryUsage.heapTotal,
+        external: memoryUsage.external,
+        rss: memoryUsage.rss,
+        heapUsedMB: memoryUsage.heapUsed / 1024 / 1024,
+        heapTotalMB: memoryUsage.heapTotal / 1024 / 1024,
+        rssMB: memoryUsage.rss / 1024 / 1024,
+        heapUsagePercent: (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100
+      },
+      cpu: {
+        user: cpuUsage.user,
+        system: cpuUsage.system,
+        userSeconds: cpuUsage.user / 1000000,
+        systemSeconds: cpuUsage.system / 1000000,
+        totalSeconds: (cpuUsage.user + cpuUsage.system) / 1000000
+      },
+      gc: {
+        count: this.gcStats.count,
+        totalTime: this.gcStats.totalTime,
+        avgTime: this.gcStats.count > 0 ? this.gcStats.totalTime / this.gcStats.count : 0
+      },
+      operations: operationMetrics,
+      activeOperations: Array.from(this.metrics.keys())
     };
   }
 
