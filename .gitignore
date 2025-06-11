@@ -23,3 +23,26 @@ logs/
 
 # Typescript
 *.tsbuildinfo
+
+# Internal files
+cursor.directory
+*.bak
+template.md
+INTERNAL_*
+PRIVATE_*
+TODO_*
+
+# Internal documentation
+docs/
+SYSTEM_ANALYSIS_REPORT.md
+SECURITY_CHECKLIST.md
+ENVIRONMENT_VARIABLES.md
+FILES_TO_REMOVE.md
+
+# Scripts
+cleanup_repo.sh
+fix_all.sh
+
+# Docker env files
+.env.docker
+docker-compose.override.yml

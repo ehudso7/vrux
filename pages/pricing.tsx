@@ -108,29 +108,23 @@ export default function Pricing() {
         <nav className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <Link href="/">
-                <a className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    VRUX
-                  </span>
-                </a>
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  VRUX
+                </span>
               </Link>
 
               <div className="flex items-center gap-4">
                 {user ? (
-                  <Link href="/dashboard">
-                    <a className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-                      Dashboard
-                    </a>
+                  <Link href="/dashboard" className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+                    Dashboard
                   </Link>
                 ) : (
-                  <Link href="/signin">
-                    <a className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:shadow-lg transition-all">
-                      Sign In
-                    </a>
+                  <Link href="/signin" className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:shadow-lg transition-all">
+                    Sign In
                   </Link>
                 )}
               </div>
@@ -314,11 +308,9 @@ export default function Pricing() {
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
               Join thousands of developers using VRUX to create beautiful components faster.
             </p>
-            <Link href="/signin">
-              <a className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:shadow-lg transition-all text-lg">
-                Get Started for Free
-                <ArrowRight className="w-5 h-5" />
-              </a>
+            <Link href="/signin" className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:shadow-lg transition-all text-lg">
+              Get Started for Free
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>

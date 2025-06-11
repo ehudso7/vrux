@@ -60,10 +60,10 @@ export default function Diagnostic() {
         <div className="bg-gray-100 p-4 rounded">
           <h2 className="text-xl font-semibold mb-2">Page Links</h2>
           <ul className="space-y-2">
-            <li><Link href="/"><a className="text-blue-600 hover:underline">Home (Complex)</a></Link></li>
-            <li><Link href="/index-safe"><a className="text-blue-600 hover:underline">Home (Safe)</a></Link></li>
-            <li><Link href="/generate"><a className="text-blue-600 hover:underline">Generate Page</a></Link></li>
-            <li><Link href="/test"><a className="text-blue-600 hover:underline">Test Page</a></Link></li>
+            <li><Link href="/" className="text-blue-600 hover:underline">Home (Complex)</Link></li>
+            <li><Link href="/index-safe" className="text-blue-600 hover:underline">Home (Safe)</Link></li>
+            <li><Link href="/generate" className="text-blue-600 hover:underline">Generate Page</Link></li>
+            <li><Link href="/test" className="text-blue-600 hover:underline">Test Page</Link></li>
           </ul>
         </div>
       </div>

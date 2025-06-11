@@ -4,9 +4,11 @@ import cors, { runMiddleware } from '../../lib/cors';
 import requestLogger from '../../lib/middleware/request-logger';
 import logger from '../../lib/logger';
 import performanceMonitor from '../../lib/performance';
-import { getAvailableProvider } from '../../lib/ai-providers';
+import { generateStreamWithFallback, getAllProvidersHealth } from '../../lib/ai-providers';
 import { validateDomain } from '../../lib/domain-restriction';
 import { requireAuthWithApiLimit, type AuthenticatedRequest } from '../../lib/middleware/auth';
+import { z } from 'zod';
+import crypto from 'crypto';
 
 interface ExtendedAuthenticatedRequest extends AuthenticatedRequest {
   id?: string;
@@ -80,20 +82,41 @@ async function generateUIStreamHandler(
 
   const { prompt, variants = 3 } = req.body;
 
-  if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-    return res.status(400).json({ error: 'Prompt is required' });
-  }
-
-  if (prompt.length > 1000) {
-    return res.status(400).json({ error: 'Prompt is too long (max 1000 characters)' });
-  }
-
-  // Check if any AI provider is available
+  // Enhanced input validation
+  const inputSchema = z.object({
+    prompt: z.string().min(1).max(1000).trim(),
+    variants: z.number().int().min(1).max(3).default(3),
+    model: z.string().optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    style: z.enum(['modern', 'bold', 'elegant']).optional(),
+  });
+  
+  let validatedInput;
   try {
-    await getAvailableProvider();
-  } catch {
-    logger.error('No AI providers available');
-    return res.status(500).json({ error: 'AI service is not configured properly' });
+    validatedInput = inputSchema.parse(req.body);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        error: 'Invalid input',
+        details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+      });
+    }
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
+  
+  const { prompt, variants: variantCount, model, temperature, style } = validatedInput;
+
+  // Check AI providers health
+  const providersHealth = await getAllProvidersHealth();
+  const hasAvailableProvider = Object.values(providersHealth).some(h => h.available);
+  
+  if (!hasAvailableProvider) {
+    logger.error('No AI providers available', providersHealth);
+    return res.status(503).json({ 
+      error: 'AI service temporarily unavailable',
+      message: 'All AI providers are currently offline. Please try again later.',
+      providers: providersHealth
+    });
   }
 
   // Set up SSE headers
@@ -103,33 +126,92 @@ async function generateUIStreamHandler(
     'Connection': 'keep-alive',
   });
 
+  // Generate request ID for tracking
+  const requestId = crypto.randomUUID();
+  const userId = req.userId || identifier;
+  
   try {
     performanceMonitor.startTimer('aiStreamGeneration');
     
+    // Send initial metadata
+    res.write(`data: ${JSON.stringify({ 
+      type: 'metadata',
+      requestId,
+      variantCount,
+      providers: Object.entries(providersHealth)
+        .filter(([_, h]) => h.available)
+        .map(([name]) => name)
+    })}\n\n`);
+    
     // Generate multiple variants
-    for (let i = 0; i < Math.min(variants, 3); i++) {
-      const variantPrompt = variants > 1 
+    for (let i = 0; i < Math.min(variantCount, 3); i++) {
+      const variantStyle = style || VARIANT_PROMPTS[i].split(' ')[2].toLowerCase();
+      const variantPrompt = variantCount > 1 
         ? `${prompt}\n\nStyle directive: ${VARIANT_PROMPTS[i]}`
         : prompt;
 
-      const provider = await getAvailableProvider();
-      const fullPrompt = `${systemPrompt}
-
-Create a React component for: ${variantPrompt}`;
-
       // Send variant start event
-      res.write(`data: ${JSON.stringify({ type: 'variant_start', variant: i })}\n\n`);
+      res.write(`data: ${JSON.stringify({ 
+        type: 'variant_start', 
+        variant: i,
+        style: variantStyle 
+      })}\n\n`);
 
-      // For now, generate the full content at once since streaming is not supported by fallback
-      const fullContent = await provider.generateComponent(fullPrompt, systemPrompt);
+      let fullContent = '';
+      let providerUsed = '';
+      let metrics: Partial<Record<string, unknown>> = {};
       
-      // Simulate streaming by sending content in chunks
-      const chunkSize = 50;
-      for (let j = 0; j < fullContent.length; j += chunkSize) {
-        const chunk = fullContent.slice(j, Math.min(j + chunkSize, fullContent.length));
-        res.write(`data: ${JSON.stringify({ type: 'content', variant: i, content: chunk })}\n\n`);
-        // Small delay to simulate streaming
-        await new Promise(resolve => setTimeout(resolve, 10));
+      try {
+        // Use enhanced streaming with fallback
+        const streamGenerator = generateStreamWithFallback(
+          variantPrompt, 
+          systemPrompt,
+          {
+            requestId,
+            userId,
+            model,
+            temperature,
+            cache: true,
+          }
+        );
+        
+        for await (const chunk of streamGenerator) {
+          if (chunk.provider) {
+            providerUsed = chunk.provider;
+            res.write(`data: ${JSON.stringify({ 
+              type: 'provider', 
+              variant: i, 
+              provider: chunk.provider 
+            })}\n\n`);
+          }
+          
+          if (chunk.content) {
+            fullContent += chunk.content;
+            res.write(`data: ${JSON.stringify({ 
+              type: 'content', 
+              variant: i, 
+              content: chunk.content 
+            })}\n\n`);
+          }
+          
+          if (chunk.metrics) {
+            metrics = { ...metrics, ...chunk.metrics };
+          }
+        }
+      } catch (streamError) {
+        logger.error('Variant generation failed', streamError as Error, {
+          requestId,
+          variant: i,
+        });
+        
+        res.write(`data: ${JSON.stringify({ 
+          type: 'variant_error', 
+          variant: i,
+          error: 'Failed to generate this variant',
+          canRetry: true
+        })}\n\n`);
+        
+        continue;
       }
 
       // Clean up the response
@@ -155,8 +237,15 @@ Create a React component for: ${variantPrompt}`;
         }
       }
 
-      // Send variant complete event
-      res.write(`data: ${JSON.stringify({ type: 'variant_complete', variant: i, code: cleanedCode })}\n\n`);
+      // Send variant complete event with metrics
+      res.write(`data: ${JSON.stringify({ 
+        type: 'variant_complete', 
+        variant: i, 
+        code: cleanedCode,
+        provider: providerUsed,
+        metrics,
+        style: variantStyle
+      })}\n\n`);
     }
 
     const generationTime = performanceMonitor.endTimer('aiStreamGeneration', {
@@ -165,24 +254,45 @@ Create a React component for: ${variantPrompt}`;
     });
 
     logger.info('UI stream generated successfully', {
-      requestId: req.id,
+      requestId,
       promptLength: prompt.length,
-      variantCount: variants,
-      generationTime: generationTime ? `${generationTime.toFixed(2)}ms` : 'unknown'
+      variantCount,
+      generationTime: generationTime ? `${generationTime.toFixed(2)}ms` : 'unknown',
+      userId,
     });
 
-    // Send done event
-    res.write(`data: ${JSON.stringify({ type: 'done', remainingRequests: rateLimiter.getRemainingRequests(identifier) })}\n\n`);
+    // Send done event with final metrics
+    res.write(`data: ${JSON.stringify({ 
+      type: 'done', 
+      remainingRequests: rateLimiter.getRemainingRequests(identifier),
+      totalTime: generationTime,
+      requestId
+    })}\n\n`);
+    
     res.end();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     logger.error('AI generation stream error', error instanceof Error ? error : null, { 
-      requestId: req.id,
-      errorMessage: errorMessage
+      requestId,
+      errorMessage: errorMessage,
+      userId,
     });
     
-    res.write(`data: ${JSON.stringify({ type: 'error', error: 'Failed to generate UI. Please try again.' })}\n\n`);
+    // Send detailed error information
+    res.write(`data: ${JSON.stringify({ 
+      type: 'error', 
+      error: 'Failed to generate UI', 
+      message: process.env.NODE_ENV === 'development' ? errorMessage : 'An unexpected error occurred. Please try again.',
+      requestId,
+      canRetry: true,
+      suggestions: [
+        'Try simplifying your prompt',
+        'Check if the service is experiencing high load',
+        'Try again in a few moments'
+      ]
+    })}\n\n`);
+    
     res.end();
   }
 }

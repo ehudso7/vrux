@@ -1,8 +1,8 @@
 # VRUX - AI-Powered React Component Generator
 
 <div align="center">
-  <h3>Professional AI Component Generator for Modern Developers</h3>
-  <p>Generate production-ready React components with AI. Build beautiful, accessible UIs 10x faster.</p>
+  <h3>Build production-ready React components with AI in seconds</h3>
+  <p>Generate beautiful, accessible UI components with multiple design variations using natural language.</p>
   
   [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   [![Next.js](https://img.shields.io/badge/Next.js-15.3.2-black)](https://nextjs.org/)
@@ -12,40 +12,32 @@
 
 ## 🚀 Features
 
-### Core Features
-- **AI-Powered Generation**: Generate React components using GPT-4 with natural language descriptions
-- **Multiple Variants**: Get 3 unique design variations for every component
-- **Live Preview**: Real-time component preview with hot reload
-- **Code Editor**: Built-in Monaco editor with syntax highlighting
-- **Export Options**: Download components or copy to clipboard
-- **Responsive Design**: All generated components are mobile-first and responsive
+- **AI-Powered Generation**: Create React components using natural language descriptions
+- **Multiple Design Variants**: Get 3 unique variations for every component
+- **Live Preview**: See your components rendered in real-time
+- **Production Ready**: Clean, accessible code with TypeScript and Tailwind CSS
+- **Smart Fallbacks**: Multi-provider AI system ensures high availability
+- **Performance Monitoring**: Built-in analytics and health tracking
+- **Enterprise Security**: Rate limiting, input validation, and secure execution
 
-### Advanced Features
-- **🔒 Security First**: Input validation, code sanitization, and sandbox execution
-- **⚡ Performance Optimized**: Response caching, request queuing, and performance monitoring
-- **♿ Accessibility**: Automatic ARIA labels, keyboard navigation, and WCAG compliance
-- **🎨 Design System Ready**: Compatible with Tailwind CSS and custom design tokens
-- **📊 Quality Metrics**: Real-time component quality scoring and recommendations
-- **🚀 One-Click Deploy**: Deploy components directly to Vercel
+## 🎥 Demo
+
+Try it live at [vrux.dev](https://vrux.dev) (coming soon)
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15.3.2](https://nextjs.org/) with Turbopack
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components**: [Radix UI](https://www.radix-ui.com/)
-- **AI Integration**: OpenAI GPT-4
-- **Code Preview**: [React Live](https://github.com/FormidableLabs/react-live)
-- **Editor**: [Monaco Editor](https://microsoft.github.io/monaco-editor/)
-- **Animation**: [Framer Motion](https://www.framer.com/motion/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Security**: isolated-vm for sandbox execution
+- **Framework**: Next.js 15.3.2 with Turbopack
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **UI Components**: Radix UI
+- **AI**: OpenAI GPT-4, Anthropic Claude (with fallback)
+- **Animation**: Framer Motion
+- **Code Preview**: React Live + Monaco Editor
 
 ## 📋 Prerequisites
 
-- Node.js 18+ and npm/yarn/pnpm
+- Node.js 18+ and npm
 - OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
-- Git
 
 ## 🏃‍♂️ Quick Start
 
@@ -69,8 +61,6 @@
    ```env
    OPENAI_API_KEY=your-openai-api-key-here
    ```
-   
-   The app will automatically validate your environment on startup.
 
 4. **Run the development server**
    ```bash
@@ -80,20 +70,20 @@
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🚀 Quick Start
+## 🎯 Usage
 
-1. **Describe your component**: Enter a natural language description of the UI component you want to create
-2. **Generate**: Click "Generate" or press `Cmd/Ctrl + Enter`
-3. **Preview**: See your component rendered in real-time
-4. **Customize**: Switch between different style variants
-5. **Export**: Copy the code or download as a file
+1. Enter a natural language description of your component
+2. Press `Generate` or `Cmd/Ctrl + Enter`
+3. View the generated component with live preview
+4. Switch between design variants
+5. Copy the code or download as a file
 
 ### Example Prompts
 
-- "Create a modern dashboard with charts and KPI cards"
-- "Build a product gallery with filters and sorting"
-- "Design a multi-step form with progress indicator"
-- "Create a chat interface with message bubbles"
+- "Create a modern pricing card with gradient background"
+- "Build a responsive navigation menu with mobile hamburger"
+- "Design a chat interface with message bubbles"
+- "Make a dashboard with charts and statistics"
 
 ## 🚀 Deployment
 
@@ -101,110 +91,39 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/vrux)
 
-1. Click the deploy button above
-2. Configure environment variables in Vercel dashboard
-3. Deploy!
-
 ### Manual Deployment
 
-1. Build the application:
-   ```bash
-   npm run build
-   ```
+```bash
+# Build for production
+npm run build
 
-2. Start the production server:
-   ```bash
-   npm start
-   ```
+# Start production server
+npm start
+```
 
 ## 📁 Project Structure
 
 ```
 vrux/
-├── pages/              # Next.js pages (Pages Router)
-│   ├── api/           # API endpoints
-│   └── index.tsx      # Main application page
 ├── components/         # React components
-│   ├── ui/            # Base UI components
-│   └── *.tsx          # Feature components
-├── lib/               # Utility functions and libraries
-│   ├── ai-*.ts        # AI-related utilities
-│   └── *.ts           # Other utilities
+├── lib/               # Utilities and core logic
+├── pages/             # Next.js pages
 ├── public/            # Static assets
-├── scripts/           # Build and utility scripts
+├── styles/            # Global styles
 └── tests/             # Test files
 ```
 
-## 🔐 Security
+## 🔒 Security
 
-VRUX implements multiple security layers:
-
-- **Input Validation**: All prompts are validated using Zod schemas
-- **Code Sanitization**: Generated code is sanitized to remove dangerous patterns
-- **Sandbox Execution**: Components are validated in isolated VM environments
-- **CSP Headers**: Strict Content Security Policy headers
-- **Rate Limiting**: API rate limiting to prevent abuse
-- **Environment Protection**: API keys are never exposed to the client
-
-## ⚡ Performance
-
-- **Response Caching**: Common prompts are cached for 5 minutes
-- **Request Queuing**: Manages concurrent generations efficiently
-- **Performance Monitoring**: Tracks generation time and provides optimization tips
-- **Code Optimization**: Automatic code minification and optimization
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-npm test
-```
-
-Run tests in watch mode:
-
-```bash
-npm run test:watch
-```
-
-## 📊 API Endpoints
-
-### Generate UI Component
-```
-POST /api/generate-ui
-Content-Type: application/json
-
-{
-  "prompt": "Create a pricing card component",
-  "variants": 3
-}
-```
-
-### Generate UI Stream (SSE)
-```
-POST /api/generate-ui-stream
-Content-Type: application/json
-
-{
-  "prompt": "Create a dashboard component",
-  "variants": 3
-}
-```
-
-### Health Check
-```
-GET /api/health
-```
+- Input validation with Zod schemas
+- Sandboxed code execution
+- Rate limiting per IP/user
+- Domain restriction in production
+- Comprehensive error tracking
 
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## 📝 License
 
@@ -214,13 +133,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - OpenAI for GPT-4 API
 - Vercel for hosting and Next.js
-- The open-source community for amazing tools and libraries
-
-## 📞 Support
-
-- 📧 Email: support@vrux.dev
-- 💬 Discord: [Join our community](https://discord.gg/vrux)
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/vrux/issues)
+- The open-source community
 
 ---
 

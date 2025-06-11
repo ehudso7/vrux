@@ -47,19 +47,15 @@ const IndexSafe: NextPage = () => {
 
             {/* Action Buttons */}
             <div className="flex justify-center gap-4">
-              <Link href="/generate">
-                <a className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                  Start Generating
-                </a>
+              <Link href="/generate" className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                Start Generating
               </Link>
-              <Link href="/viewcomfy-demo">
-                <a className={`px-6 py-3 rounded-lg transition-colors ${
+              <Link href="/viewcomfy-demo" className={`px-6 py-3 rounded-lg transition-colors ${
                   darkMode 
                     ? 'bg-gray-800 text-white hover:bg-gray-700' 
                     : 'bg-white text-gray-900 hover:bg-gray-100 border border-gray-200'
                 }`}>
-                  View Demo
-                </a>
+                View Demo
               </Link>
             </div>
 
