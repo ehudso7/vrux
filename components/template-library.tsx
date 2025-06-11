@@ -10,20 +10,19 @@ import {
   List,
   X,
   Download,
-  Code2
+  Code2,
+  Loader2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { 
   Template,
-  templateCategories,
-  getTemplates,
-  getPopularTemplates,
-  getRecentTemplates
+  templateCategories
 } from '../lib/template-store';
 import toast from 'react-hot-toast';
 import { LiveProvider, LiveError, LivePreview } from 'react-live';
 import * as React from 'react';
 import Editor from '@monaco-editor/react';
+import { useAuth } from '../lib/auth-context';
 
 interface TemplateLibraryProps {
   onSelectTemplate: (template: Template) => void;
@@ -37,6 +36,7 @@ export default function TemplateLibrary({
   onSelectTemplate, 
   darkMode = false 
 }: TemplateLibraryProps) {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -45,39 +45,115 @@ export default function TemplateLibrary({
   const [showPreview, setShowPreview] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [likedTemplates, setLikedTemplates] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Load templates based on filters
-    let loadedTemplates: Template[] = [];
+  // Fetch templates from API
+  const fetchTemplates = async () => {
+    setIsLoading(true);
+    setError(null);
     
-    if (sortBy === 'popular') {
-      loadedTemplates = selectedCategory === 'all' && !searchQuery 
-        ? getPopularTemplates(20)
-        : getTemplates(selectedCategory, searchQuery);
-    } else if (sortBy === 'recent') {
-      loadedTemplates = selectedCategory === 'all' && !searchQuery
-        ? getRecentTemplates(20)
-        : getTemplates(selectedCategory, searchQuery);
-    } else {
-      loadedTemplates = getTemplates(selectedCategory, searchQuery);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      params.append('sort', sortBy === 'recent' ? 'newest' : sortBy === 'likes' ? 'popular' : sortBy);
+      
+      const response = await fetch(`/api/templates?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setTemplates(data.templates);
+      } else {
+        throw new Error(data.error || 'Failed to load templates');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load templates');
+      toast.error('Failed to load templates');
+      setTemplates([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setTemplates(loadedTemplates);
-  }, [selectedCategory, searchQuery, sortBy]);
-
-  const handleLikeTemplate = (templateId: string) => {
-    const newLiked = new Set(likedTemplates);
-    if (newLiked.has(templateId)) {
-      newLiked.delete(templateId);
-      toast('Removed from favorites');
-    } else {
-      newLiked.add(templateId);
-      toast.success('Added to favorites!');
-    }
-    setLikedTemplates(newLiked);
   };
 
-  const handleUseTemplate = (template: Template) => {
+  useEffect(() => {
+    fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, searchQuery, sortBy]);
+
+  const handleLikeTemplate = async (templateId: string) => {
+    if (!user) {
+      toast.error('Please sign in to like templates');
+      return;
+    }
+
+    const isLiked = likedTemplates.has(templateId);
+    const method = isLiked ? 'DELETE' : 'POST';
+    
+    try {
+      const response = await fetch(`/api/templates/${templateId}/like`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update like');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        const newLiked = new Set(likedTemplates);
+        if (isLiked) {
+          newLiked.delete(templateId);
+          toast('Removed from favorites');
+        } else {
+          newLiked.add(templateId);
+          toast.success('Added to favorites!');
+        }
+        setLikedTemplates(newLiked);
+        
+        // Update local template likes count
+        setTemplates(prev => prev.map(t => 
+          t.id === templateId ? { ...t, likes: data.likes } : t
+        ));
+      }
+    } catch (err) {
+      toast.error('Failed to update like');
+    }
+  };
+
+  const handleUseTemplate = async (template: Template) => {
+    try {
+      // Track template usage
+      const response = await fetch('/api/templates', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ templateId: template.id }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local template uses count
+        setTemplates(prev => prev.map(t => 
+          t.id === template.id ? { ...t, uses: data.uses } : t
+        ));
+      }
+    } catch (err) {
+      // Don't block template usage if tracking fails
+      console.error('Failed to track template usage:', err);
+    }
+    
     onSelectTemplate(template);
     toast.success(`Using "${template.name}" template`);
   };
@@ -204,7 +280,18 @@ export default function TemplateLibrary({
 
           {/* Templates Grid/List */}
           <div className="flex-1">
-            {templates.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+                <Button onClick={fetchTemplates} className="bg-purple-600 hover:bg-purple-700 text-white">
+                  Try Again
+                </Button>
+              </div>
+            ) : templates.length === 0 ? (
               <div className="text-center py-12">
                 <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-gray-600 dark:text-gray-400">

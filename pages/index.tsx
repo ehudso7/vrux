@@ -6,6 +6,8 @@ import { useRouter } from 'next/router';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { useAuth } from '../lib/auth-context';
+import { Footer } from '../components/navigation/Footer';
+
 import { 
   Sparkles, 
   Code2, 
@@ -18,7 +20,6 @@ import {
   Layers,
   ArrowRight,
   Github,
-  Twitter,
   Menu,
   X,
   Monitor,
@@ -395,8 +396,8 @@ const Home: NextPage = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 <div className="flex items-center gap-8">
+                  <Link href="/">
                   <motion.a 
-                    href="/" 
                     className="flex items-center gap-2 group"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -407,9 +408,10 @@ const Home: NextPage = () => {
                     <span className="font-bold text-xl tracking-tight">VRUX</span>
                     <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">BETA</span>
                   </motion.a>
+                </Link>
                   
                   <div className="hidden md:flex items-center gap-1">
-                    <Link href="#examples">
+                    <Link href="/examples">
                       <a className={`px-3 py-2 text-sm font-medium rounded-lg ${
                         darkMode 
                           ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
@@ -638,17 +640,18 @@ const Home: NextPage = () => {
                 className={`md:hidden border-b ${darkMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'}`}
               >
                 <div className="px-4 py-4 space-y-2">
-                  <a
-                    href="#examples"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block px-4 py-2 text-sm font-medium rounded-lg ${
-                      darkMode
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    } transition-all`}
-                  >
-                    Examples
-                  </a>
+                  <Link href="/examples">
+                    <a
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-4 py-2 text-sm font-medium rounded-lg ${
+                        darkMode
+                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      } transition-all`}
+                    >
+                      Examples
+                    </a>
+                  </Link>
                   <Link href="/templates">
                     <a
                       onClick={() => setMobileMenuOpen(false)}
@@ -1415,72 +1418,7 @@ const Home: NextPage = () => {
             </div>
           </section>
 
-          {/* Footer */}
-          <footer className={`border-t ${
-            darkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
-          }`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-              <div className="grid md:grid-cols-4 gap-8">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-8 h-8 ${
-                      darkMode ? 'bg-white text-black' : 'bg-black text-white'
-                    } rounded-lg flex items-center justify-center`}>
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <span className="font-bold text-xl">VRUX</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Professional AI component generator for modern developers.
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold mb-4">Product</h4>
-                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Features</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Templates</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Examples</a></li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold mb-4">Resources</h4>
-                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Documentation</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">API Reference</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Blog</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Community</a></li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold mb-4">Company</h4>
-                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">About</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Privacy</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Terms</a></li>
-                    <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">Contact</a></li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  © {new Date().getFullYear()} VRUX. All rights reserved.
-                </p>
-                <div className="flex items-center gap-4 mt-4 md:mt-0">
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                    <Github className="w-5 h-5" />
-                  </a>
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                    <Twitter className="w-5 h-5" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </footer>
+          <Footer darkMode={darkMode} />
         </div>
 
         {/* Command Palette */}

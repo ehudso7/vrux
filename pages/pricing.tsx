@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -7,9 +7,11 @@ import {
   Check, 
   X, 
   Sparkles, 
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
+import toast from 'react-hot-toast';
 
 const plans = [
   {
@@ -78,8 +80,35 @@ export default function Pricing() {
   const router = useRouter();
   const { user } = useAuth();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>('Free');
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
 
-  const handleSelectPlan = (planName: string) => {
+  // Fetch current subscription status
+  useEffect(() => {
+    if (user) {
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
+
+  const fetchSubscriptionStatus = async () => {
+    setIsLoadingStatus(true);
+    try {
+      const response = await fetch('/api/subscriptions/status');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setCurrentPlan(data.subscription.plan);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscription status:', error);
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+
+  const handleSelectPlan = async (planName: string) => {
     if (!user) {
       router.push('/signin');
       return;
@@ -87,13 +116,49 @@ export default function Pricing() {
 
     if (planName === 'Free') {
       router.push('/dashboard');
-    } else if (planName === 'Team') {
-      // In a real app, this would open a contact form
-      const email = process.env.NODE_ENV === 'production' ? 'sales@vrux.dev' : 'sales@localhost';
-      alert(`Please contact ${email} for Team pricing`);
-    } else {
-      // In a real app, this would go to a checkout page
-      router.push('/dashboard');
+      return;
+    }
+
+    if (planName === 'Team') {
+      // Open contact form or redirect to sales
+      toast('Please contact our sales team for Team pricing', {
+        icon: '📧',
+        duration: 4000,
+      });
+      window.location.href = 'mailto:sales@vrux.dev?subject=VRUX Team Plan Inquiry';
+      return;
+    }
+
+    // Handle Pro plan checkout
+    setLoadingPlan(planName);
+    try {
+      const response = await fetch('/api/subscriptions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planName,
+          billingPeriod,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Redirect to checkout or dashboard
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error(data.error || 'Failed to create checkout');
+      }
+    } catch (error) {
+      toast.error('Failed to start checkout. Please try again.');
+      console.error('Checkout error:', error);
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -222,14 +287,31 @@ export default function Pricing() {
 
                   <button
                     onClick={() => handleSelectPlan(plan.name)}
+                    disabled={loadingPlan === plan.name || currentPlan === plan.name || isLoadingStatus}
                     className={`w-full py-3 px-6 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                      plan.popular
+                      currentPlan === plan.name
+                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                        : plan.popular
                         ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
+                    } ${loadingPlan === plan.name || isLoadingStatus ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
+                    {loadingPlan === plan.name ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : currentPlan === plan.name ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Current Plan
+                      </>
+                    ) : (
+                      <>
+                        {plan.cta}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
 
                   <ul className="mt-8 space-y-4">

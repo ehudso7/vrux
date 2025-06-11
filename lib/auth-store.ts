@@ -10,6 +10,7 @@ export interface User {
   plan: 'free' | 'pro' | 'enterprise';
   apiCalls: number;
   maxApiCalls: number;
+  isAdmin?: boolean;
 }
 
 interface StoredUser extends User {
@@ -32,6 +33,16 @@ class AuthStore {
       password: 'demo123',
       name: 'Demo User',
     });
+    
+    // Create an admin user for development
+    const adminUser = this.createUser({
+      email: 'admin@vrux.dev',
+      password: 'admin123',
+      name: 'Admin User',
+    });
+    adminUser.isAdmin = true;
+    adminUser.plan = 'enterprise';
+    adminUser.maxApiCalls = -1; // Unlimited
   }
 
   private hashPassword(password: string): string {
@@ -42,7 +53,7 @@ class AuthStore {
     return randomBytes(32).toString('hex');
   }
 
-  createUser(data: { email: string; password: string; name: string }): StoredUser {
+  createUser(data: { email: string; password: string; name: string; isAdmin?: boolean }): StoredUser {
     const userId = randomBytes(16).toString('hex');
     const user: StoredUser = {
       id: userId,
@@ -51,6 +62,7 @@ class AuthStore {
       name: data.name,
       createdAt: new Date(),
       plan: 'free',
+      isAdmin: data.isAdmin || false,
       apiCalls: 0,
       maxApiCalls: 100,
     };

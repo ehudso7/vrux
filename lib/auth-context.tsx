@@ -10,6 +10,7 @@ interface User {
   plan: 'free' | 'pro' | 'enterprise';
   apiCalls: number;
   maxApiCalls: number;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
