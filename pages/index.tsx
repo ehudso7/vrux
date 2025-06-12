@@ -791,18 +791,20 @@ const Home: NextPage = () => {
                 </div>
 
                 {/* Trust indicators */}
-                <div className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-12 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span>4.9/5 rating</span>
+                    <span className="font-medium">4.9/5 rating</span>
                   </div>
+                  <div className="hidden sm:block w-px h-4 bg-gray-300 dark:bg-gray-700" />
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>50k+ components generated</span>
+                    <MessageSquare className="w-4 h-4 text-purple-500" />
+                    <span className="font-medium">50k+ components</span>
                   </div>
+                  <div className="hidden sm:block w-px h-4 bg-gray-300 dark:bg-gray-700" />
                   <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    <span>Used by developers worldwide</span>
+                    <Globe className="w-4 h-4 text-blue-500" />
+                    <span className="font-medium">Used worldwide</span>
                   </div>
                 </div>
               </motion.div>
@@ -904,8 +906,8 @@ const Home: NextPage = () => {
                     placeholder="Describe your UI component in detail... (⌘+Enter to generate)"
                     className={`w-full px-6 py-5 pr-32 bg-transparent outline-none resize-none text-lg ${
                       darkMode ? 'placeholder-gray-500' : 'placeholder-gray-400'
-                    }`}
-                    rows={1}
+                    } min-h-[100px]`}
+                    rows={3}
                     disabled={isGenerating}
                   />
                   
