@@ -396,56 +396,48 @@ const Home: NextPage = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 <div className="flex items-center gap-8">
-                  <Link href="/">
-                  <motion.a 
-                    className="flex items-center gap-2 group"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className={`w-9 h-9 ${darkMode ? 'bg-white text-black' : 'bg-black text-white'} rounded-xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight">VRUX</span>
-                    <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">BETA</span>
-                  </motion.a>
-                </Link>
+                  <Link href="/" className="flex items-center gap-2 group">
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className={`w-9 h-9 ${darkMode ? 'bg-white text-black' : 'bg-black text-white'} rounded-xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <span className="font-bold text-xl tracking-tight">VRUX</span>
+                      <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">BETA</span>
+                    </motion.div>
+                  </Link>
                   
                   <div className="hidden md:flex items-center gap-1">
-                    <Link href="/examples">
-                      <a className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                        darkMode 
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}>
-                        Examples
-                      </a>
+                    <Link href="/examples" className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                      darkMode 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}>
+                      Examples
                     </Link>
-                    <Link href="/templates">
-                      <a className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                        darkMode 
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}>
-                        Templates
-                      </a>
+                    <Link href="/templates" className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                      darkMode 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}>
+                      Templates
                     </Link>
-                    <Link href="/docs">
-                      <a className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                        darkMode 
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}>
-                        Docs
-                      </a>
+                    <Link href="/docs" className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                      darkMode 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}>
+                      Docs
                     </Link>
-                    <Link href="/pricing">
-                      <a className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                        darkMode 
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}>
-                        Pricing
-                      </a>
+                    <Link href="/pricing" className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                      darkMode 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}>
+                      Pricing
                     </Link>
                   </div>
                 </div>
@@ -640,53 +632,49 @@ const Home: NextPage = () => {
                 className={`md:hidden border-b ${darkMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'}`}
               >
                 <div className="px-4 py-4 space-y-2">
-                  <Link href="/examples">
-                    <a
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-2 text-sm font-medium rounded-lg ${
-                        darkMode
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}
-                    >
-                      Examples
-                    </a>
+                  <Link
+                    href="/examples"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-sm font-medium rounded-lg ${
+                      darkMode
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}
+                  >
+                    Examples
                   </Link>
-                  <Link href="/templates">
-                    <a
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-2 text-sm font-medium rounded-lg ${
-                        darkMode
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}
-                    >
-                      Templates
-                    </a>
+                  <Link
+                    href="/templates"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-sm font-medium rounded-lg ${
+                      darkMode
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}
+                  >
+                    Templates
                   </Link>
-                  <Link href="/docs">
-                    <a
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-2 text-sm font-medium rounded-lg ${
-                        darkMode
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}
-                    >
-                      Docs
-                    </a>
+                  <Link
+                    href="/docs"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-sm font-medium rounded-lg ${
+                      darkMode
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}
+                  >
+                    Docs
                   </Link>
-                  <Link href="/pricing">
-                    <a
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-2 text-sm font-medium rounded-lg ${
-                        darkMode
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      } transition-all`}
-                    >
-                      Pricing
-                    </a>
+                  <Link
+                    href="/pricing"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-2 text-sm font-medium rounded-lg ${
+                      darkMode
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    } transition-all`}
+                  >
+                    Pricing
                   </Link>
                   <button
                     onClick={() => {
@@ -736,8 +724,8 @@ const Home: NextPage = () => {
                   </span>
                 </motion.div>
                 
-                <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-                  <span className="block">Ship UI components</span>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-tight">
+                  <span className="block mb-2">Ship UI components</span>
                   <span className="relative">
                     <span className="relative z-10 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-gradient bg-300%">
                       10x faster with AI
@@ -763,7 +751,7 @@ const Home: NextPage = () => {
                   </span>
                 </h1>
                 
-                <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto">
+                <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
                   Transform your ideas into production-ready React components. Get multiple design variations, 
                   live preview, and clean code that just works.
                 </p>
@@ -773,7 +761,7 @@ const Home: NextPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => document.getElementById('generator')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="group px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium shadow-2xl shadow-black/25 hover:shadow-black/30 transition-all flex items-center gap-3"
+                    className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold shadow-xl shadow-purple-500/25 hover:shadow-2xl hover:shadow-purple-500/30 transition-all flex items-center justify-center gap-3"
                   >
                     Start Building
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -783,7 +771,7 @@ const Home: NextPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => router.push('/templates')}
-                    className="px-8 py-4 border-2 border-gray-300 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center gap-3"
+                    className="w-full sm:w-auto px-8 py-4 border-2 border-gray-300 dark:border-gray-700 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-900 transition-all flex items-center justify-center gap-3"
                   >
                     <Layers className="w-5 h-5" />
                     Browse Templates
@@ -791,21 +779,47 @@ const Home: NextPage = () => {
                 </div>
 
                 {/* Trust indicators */}
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span className="font-medium">4.9/5 rating</span>
-                  </div>
-                  <div className="hidden sm:block w-px h-4 bg-gray-300 dark:bg-gray-700" />
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-purple-500" />
-                    <span className="font-medium">50k+ components</span>
-                  </div>
-                  <div className="hidden sm:block w-px h-4 bg-gray-300 dark:bg-gray-700" />
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-blue-500" />
-                    <span className="font-medium">Used worldwide</span>
-                  </div>
+                <div className="mt-16 flex flex-wrap items-center justify-center gap-6 md:gap-12">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-4 py-3 rounded-full"
+                  >
+                    <div className="flex -space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                      ))}
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">4.9/5</span>
+                    <span className="text-gray-600 dark:text-gray-400">rating</span>
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-4 py-3 rounded-full"
+                  >
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                      <Code2 className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">50k+</span>
+                    <span className="text-gray-600 dark:text-gray-400">components</span>
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-4 py-3 rounded-full"
+                  >
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">Global</span>
+                    <span className="text-gray-600 dark:text-gray-400">reach</span>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
@@ -829,60 +843,80 @@ const Home: NextPage = () => {
                 </div>
                 
                 {/* Category Pills */}
-                <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
-                  <button
+                <div className="flex items-center justify-center gap-3 mb-8 flex-wrap">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedCategory(null)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
                       selectedCategory === null
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
                         : darkMode 
-                          ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
-                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          ? 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 border border-gray-700'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                     }`}
                   >
-                    All
-                  </button>
-                  {['Analytics', 'E-commerce', 'Marketing', 'Forms'].map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedCategory === category
-                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
+                    ✨ All Categories
+                  </motion.button>
+                  {[
+                    { name: 'Analytics', icon: '📊' },
+                    { name: 'E-commerce', icon: '🛍️' },
+                    { name: 'Marketing', icon: '🎯' },
+                    { name: 'Forms', icon: '📝' }
+                  ].map((category) => (
+                    <motion.button
+                      key={category.name}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedCategory(category.name)}
+                      className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                        selectedCategory === category.name
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
                           : darkMode 
-                            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                            ? 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 border border-gray-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                       }`}
                     >
-                      {category}
-                    </button>
+                      <span className="mr-1.5">{category.icon}</span>
+                      {category.name}
+                    </motion.button>
                   ))}
                 </div>
 
                 {/* Example Prompts Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                   {EXAMPLE_PROMPTS
                     .filter(ex => !selectedCategory || ex.category === selectedCategory)
                     .slice(0, 8)
                     .map((example, index) => (
                     <motion.button
                       key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
+                      whileHover={{ y: -4 }}
                       onClick={() => {
                         setPrompt(example.fullText);
                         setTimeout(() => handleGenerate(), 100);
                       }}
-                      className={`group p-4 ${
+                      className={`group relative p-5 ${
                         darkMode 
-                          ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' 
+                          ? 'bg-gray-800/50 hover:bg-gray-700/50 border-gray-700' 
                           : 'bg-white hover:bg-gray-50 border-gray-200'
-                      } rounded-xl border hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-lg transition-all text-left`}
+                      } rounded-2xl border hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl transition-all text-left overflow-hidden`}
                     >
-                      <span className="text-2xl mb-2 block group-hover:scale-110 transition-transform">{example.icon}</span>
-                      <span className="text-sm font-medium block mb-1">{example.text}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{example.category}</span>
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative">
+                        <span className="text-3xl mb-3 block group-hover:scale-110 transition-transform">{example.icon}</span>
+                        <h3 className="text-sm font-semibold mb-1 text-gray-900 dark:text-white">{example.text}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full" />
+                          {example.category}
+                        </p>
+                      </div>
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ArrowRight className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
                     </motion.button>
                   ))}
                 </div>
