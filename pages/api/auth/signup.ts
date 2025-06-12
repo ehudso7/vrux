@@ -1,25 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { authStore } from '../../../lib/auth-store';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { prisma, handlePrismaError } from '../../../lib/prisma';
 import logger from '../../../lib/logger';
-import { requireDomain } from '../../../lib/domain-restriction';
-import { withAuthRateLimit, logFailedAuth, getUserIdentifier } from '../../../lib/auth-rate-limiter';
+import { withAuthRateLimit } from '../../../lib/auth-rate-limiter';
+import { SubscriptionTier } from '@prisma/client';
 
 async function signupHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { email, password, name } = req.body;
 
-    if (!email || !password || !name) {
+    if (!email || !password) {
       return res.status(400).json({ 
-        error: 'Bad Request',
-        message: 'Invalid request parameters',
-        code: 'INVALID_REQUEST'
+        error: 'Email and password are required'
       });
     }
 
@@ -27,89 +27,99 @@ async function signupHandler(
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ 
-        error: 'Bad Request',
-        message: 'Invalid request parameters',
-        code: 'INVALID_EMAIL'
+        error: 'Invalid email format'
       });
     }
 
     // Validate password strength
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json({ 
-        error: 'Bad Request',
-        message: 'Password does not meet requirements',
-        code: 'WEAK_PASSWORD'
+        error: 'Password must be at least 8 characters long'
       });
     }
 
-    // Check if user exists
-    const existingUser = authStore.findUserByEmail(email);
-    const identifier = getUserIdentifier(req);
-    
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+
     if (existingUser) {
-      logFailedAuth('signup', identifier, 'email_exists', { email });
-      return res.status(409).json({ 
-        error: 'Conflict',
-        message: 'Unable to create account',
-        code: 'ACCOUNT_EXISTS'
+      return res.status(400).json({ 
+        error: 'User already exists'
       });
     }
 
-    // Create user
-    const user = authStore.createUser({ email, password, name });
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create session
-    const sessionId = authStore.createSession(user.id);
+    // Create new user
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        name: name || email.split('@')[0],
+        subscription: SubscriptionTier.FREE,
+        apiCallsCount: 0,
+        apiCallsReset: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+        subscription: true,
+        subscriptionExpiry: true,
+        apiCallsCount: true,
+        apiCallsReset: true,
+        createdAt: true,
+      }
+    });
 
-    // Set session cookie
-    res.setHeader(
-      'Set-Cookie',
-      `session=${sessionId}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict${
-        process.env.NODE_ENV === 'production' ? '; Secure' : ''
-      }`
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        subscription: user.subscription 
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
     );
 
-    logger.info('User signed up', { userId: user.id, email: user.email });
+    // Log analytics event
+    await prisma.analytics.create({
+      data: {
+        userId: user.id,
+        event: 'SUBSCRIPTION_UPGRADED', // Track new user signup
+        metadata: {
+          source: 'signup_form',
+          subscription: user.subscription
+        }
+      }
+    }).catch(err => logger.error('Failed to log analytics', err));
 
-    // Return user data (without password)
+    logger.info('New user created', { userId: user.id, email: user.email });
+
     res.status(201).json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      createdAt: user.createdAt,
-      plan: user.plan,
-      apiCalls: user.apiCalls,
-      maxApiCalls: user.maxApiCalls,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        subscription: user.subscription,
+        subscriptionExpiry: user.subscriptionExpiry,
+        apiCallsCount: user.apiCallsCount,
+        apiCallsReset: user.apiCallsReset,
+        createdAt: user.createdAt,
+      }
     });
   } catch (error) {
-    logger.error('Sign up error', error instanceof Error ? error : new Error(String(error)));
-    res.status(500).json({ 
-      error: 'Internal Server Error',
-      message: 'An error occurred during registration',
-      code: 'INTERNAL_ERROR'
-    });
+    logger.error('Sign up error', error);
+    const { status, message } = handlePrismaError(error);
+    res.status(status).json({ error: message });
   }
 }
 
-// Apply domain restriction and rate limiting
-// Wrap with error handling to ensure JSON responses
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  try {
-    // In development, skip domain restriction
-    if (process.env.NODE_ENV === 'development') {
-      return await withAuthRateLimit(signupHandler, 'signup')(req, res);
-    }
-    // In production, apply domain restriction
-    return await requireDomain(withAuthRateLimit(signupHandler, 'signup'))(req, res);
-  } catch (error) {
-    // Always return JSON for API errors
-    logger.error('Signup endpoint error', error as Error);
-    return res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to process signup request',
-      code: 'SIGNUP_ERROR'
-    });
-  }
-};
-
-export default handler;
+// Apply rate limiting
+export default withAuthRateLimit(signupHandler, 'signup');

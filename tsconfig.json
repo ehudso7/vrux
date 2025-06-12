@@ -29,5 +29,5 @@
     "**/*.tsx",
     "types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", "tests", "test"]
+  "exclude": ["node_modules", "tests", "test", "cli", "vscode-extension"]
 }

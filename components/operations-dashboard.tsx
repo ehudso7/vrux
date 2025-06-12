@@ -48,15 +48,6 @@ interface ActiveAlert {
   acknowledged: boolean;
 }
 
-interface TraceData {
-  traceId: string;
-  service: string;
-  operation: string;
-  duration: number;
-  status: 'success' | 'error';
-  timestamp: Date;
-}
-
 // Chart component for real-time metrics
 const MetricsChart: React.FC<{ 
   data: number[]; 
@@ -180,12 +171,12 @@ export const OperationsDashboard: React.FC = () => {
 
   const [services, setServices] = useState<ServiceHealth[]>([]);
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
-  const [traces, setTraces] = useState<TraceData[]>([]);
   const [cpuHistory, setCpuHistory] = useState<number[]>(new Array(20).fill(0));
   const [memoryHistory, setMemoryHistory] = useState<number[]>(new Array(20).fill(0));
   const [requestHistory, setRequestHistory] = useState<number[]>(new Array(20).fill(0));
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update metric histories
   const updateHistories = useCallback((metrics: SystemMetrics) => {
@@ -194,77 +185,11 @@ export const OperationsDashboard: React.FC = () => {
     setRequestHistory(prev => [...prev.slice(1), metrics.network.requestsPerSecond]);
   }, []);
 
-  // Handle real-time updates
-  const handleRealtimeUpdate = useCallback((data: any) => {
-    switch (data.type) {
-      case 'metrics':
-        setSystemMetrics(data.metrics);
-        updateHistories(data.metrics);
-        break;
-      case 'services':
-        setServices(data.services);
-        break;
-      case 'alert':
-        setAlerts(prev => [data.alert, ...prev].slice(0, 10));
-        break;
-      case 'trace':
-        setTraces(prev => [data.trace, ...prev].slice(0, 20));
-        break;
-    }
-  }, [updateHistories]);
-
-  // WebSocket connection for real-time updates
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws/operations`);
-      
-      ws.onopen = () => {
-        console.log('Connected to operations WebSocket');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          handleRealtimeUpdate(data);
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        // Reconnect after 5 seconds
-        if (autoRefresh) {
-          setTimeout(connectWebSocket, 5000);
-        }
-      };
-
-      wsRef.current = ws;
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, [autoRefresh, handleRealtimeUpdate]);
-
-  // Fetch initial data
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  // Fetch all dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     try {
       const [metricsRes, servicesRes, alertsRes] = await Promise.all([
         fetch('/api/operations/metrics'),
@@ -275,31 +200,62 @@ export const OperationsDashboard: React.FC = () => {
       if (metricsRes.ok) {
         const metrics = await metricsRes.json();
         setSystemMetrics(metrics);
+        updateHistories(metrics);
       }
 
       if (servicesRes.ok) {
-        const services = await servicesRes.json();
-        setServices(services);
+        const servicesData = await servicesRes.json();
+        setServices(servicesData.services || servicesData);
       }
 
       if (alertsRes.ok) {
-        const alerts = await alertsRes.json();
-        setAlerts(alerts);
+        const alertsData = await alertsRes.json();
+        setAlerts(alertsData.alerts || alertsData);
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [isLoading, updateHistories]);
+
+  // Set up polling
+  useEffect(() => {
+    if (!autoRefresh) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // Initial fetch
+    fetchDashboardData();
+
+    // Set up polling interval
+    intervalRef.current = setInterval(() => {
+      fetchDashboardData();
+    }, 2000); // Poll every 2 seconds
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [autoRefresh, fetchDashboardData]);
 
   const acknowledgeAlert = useCallback(async (alertId: string) => {
     try {
-      await fetch(`/api/operations/alerts/${alertId}/acknowledge`, {
+      const res = await fetch(`/api/operations/alerts/${alertId}/acknowledge`, {
         method: 'POST'
       });
 
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId ? { ...alert, acknowledged: true } : alert
-      ));
+      if (res.ok) {
+        setAlerts(prev => prev.map(alert => 
+          alert.id === alertId ? { ...alert, acknowledged: true } : alert
+        ));
+      }
     } catch (error) {
       console.error('Failed to acknowledge alert:', error);
     }
@@ -329,10 +285,10 @@ export const OperationsDashboard: React.FC = () => {
             variant={autoRefresh ? 'default' : 'outline'}
             size="sm"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${autoRefresh && isLoading ? 'animate-spin' : ''}`} />
             {autoRefresh ? 'Live' : 'Paused'}
           </Button>
-          <Button onClick={fetchDashboardData} variant="outline" size="sm">
+          <Button onClick={fetchDashboardData} variant="outline" size="sm" disabled={isLoading}>
             Refresh Now
           </Button>
         </div>
@@ -456,9 +412,9 @@ export const OperationsDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle>Service Health</CardTitle>
           <CardDescription>
-            {serviceHealthSummary.healthy} healthy, 
-            {serviceHealthSummary.degraded > 0 && ` ${serviceHealthSummary.degraded} degraded,`}
-            {serviceHealthSummary.down > 0 && ` ${serviceHealthSummary.down} down`}
+            {serviceHealthSummary.healthy} healthy
+            {serviceHealthSummary.degraded > 0 && `, ${serviceHealthSummary.degraded} degraded`}
+            {serviceHealthSummary.down > 0 && `, ${serviceHealthSummary.down} down`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -471,69 +427,29 @@ export const OperationsDashboard: React.FC = () => {
       </Card>
 
       {/* Active Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Alerts</CardTitle>
-            <CardDescription>
-              {alerts.filter(a => !a.acknowledged).length} unacknowledged
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {alerts.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No active alerts</p>
-              ) : (
-                alerts.map(alert => (
-                  <AlertItem
-                    key={alert.id}
-                    alert={alert}
-                    onAcknowledge={acknowledgeAlert}
-                  />
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Traces */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Traces</CardTitle>
-            <CardDescription>Latest distributed trace operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {traces.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No recent traces</p>
-              ) : (
-                traces.map(trace => (
-                  <div
-                    key={trace.traceId}
-                    className="flex items-center justify-between p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        trace.status === 'success' ? 'bg-green-500' : 'bg-red-500'
-                      }`} />
-                      <div>
-                        <p className="text-sm font-medium">{trace.operation}</p>
-                        <p className="text-xs text-gray-500">{trace.service}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{trace.duration}ms</p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(trace.timestamp).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Alerts</CardTitle>
+          <CardDescription>
+            {alerts.filter(a => !a.acknowledged).length} unacknowledged
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {alerts.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No active alerts</p>
+            ) : (
+              alerts.map(alert => (
+                <AlertItem
+                  key={alert.id}
+                  alert={alert}
+                  onAcknowledge={acknowledgeAlert}
+                />
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

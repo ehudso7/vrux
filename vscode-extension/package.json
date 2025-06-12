@@ -1,0 +1,196 @@
+{
+  "name": "vrux-vscode",
+  "displayName": "VRUX - AI Component Generator",
+  "description": "Generate React components with AI directly in VS Code",
+  "version": "1.0.0",
+  "publisher": "vrux",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "react",
+    "ai",
+    "component",
+    "generator",
+    "tailwind"
+  ],
+  "activationEvents": [
+    "onCommand:vrux.generateComponent",
+    "onCommand:vrux.generateFromSelection",
+    "onCommand:vrux.showHistory",
+    "onCommand:vrux.openInBrowser",
+    "onView:vrux.componentExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vrux.generateComponent",
+        "title": "Generate Component",
+        "category": "VRUX",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vrux.generateFromSelection",
+        "title": "Generate Component from Selection",
+        "category": "VRUX"
+      },
+      {
+        "command": "vrux.showHistory",
+        "title": "Show Component History",
+        "category": "VRUX",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vrux.openInBrowser",
+        "title": "Open VRUX in Browser",
+        "category": "VRUX",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "vrux.selectModel",
+        "title": "Select AI Model",
+        "category": "VRUX",
+        "icon": "$(gear)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vrux",
+          "title": "VRUX",
+          "icon": "media/vrux-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "vrux": [
+        {
+          "id": "vrux.componentExplorer",
+          "name": "Components",
+          "icon": "$(files)",
+          "contextualTitle": "VRUX Components"
+        },
+        {
+          "id": "vrux.history",
+          "name": "History",
+          "icon": "$(history)",
+          "contextualTitle": "Component History"
+        },
+        {
+          "id": "vrux.marketplace",
+          "name": "Marketplace",
+          "icon": "$(extensions)",
+          "contextualTitle": "Component Marketplace"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceExtname == .jsx || resourceExtname == .tsx",
+          "command": "vrux.generateFromSelection",
+          "group": "vrux"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vrux.generateComponent",
+          "when": "view == vrux.componentExplorer",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "VRUX",
+      "properties": {
+        "vrux.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your VRUX API key for authentication"
+        },
+        "vrux.apiUrl": {
+          "type": "string",
+          "default": "https://vrux.dev",
+          "description": "VRUX API endpoint"
+        },
+        "vrux.defaultModel": {
+          "type": "string",
+          "default": "gpt-4o",
+          "enum": [
+            "gpt-4o",
+            "gpt-4-turbo",
+            "gpt-3.5-turbo",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-opus-20240229",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash"
+          ],
+          "description": "Default AI model for component generation"
+        },
+        "vrux.autoPreview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically show preview panel after generation"
+        },
+        "vrux.saveHistory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save component generation history"
+        },
+        "vrux.streamingEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time streaming generation"
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./snippets/vrux-snippets.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./snippets/vrux-snippets.json"
+      },
+      {
+        "language": "javascriptreact",
+        "path": "./snippets/vrux-snippets.json"
+      },
+      {
+        "language": "typescriptreact",
+        "path": "./snippets/vrux-snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.3",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "eventsource": "^2.0.2"
+  }
+}

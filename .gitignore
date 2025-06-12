@@ -50,3 +50,5 @@ docker-compose.override.yml
 # Local Netlify folder
 .netlify
 .vercel
+
+/src/generated/prisma

@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and profiles
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // Optional for OAuth users
+  name          String?
+  avatarUrl     String?
+  provider      AuthProvider @default(LOCAL)
+  providerId    String?   // ID from OAuth provider
+  
+  // Subscription details
+  subscription  SubscriptionTier @default(FREE)
+  subscriptionExpiry DateTime?
+  stripeCustomerId String?
+  
+  // Usage tracking
+  apiCallsCount Int      @default(0)
+  apiCallsReset DateTime @default(now())
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLoginAt   DateTime?
+  
+  // Relations
+  projects      Project[]
+  templates     Template[]
+  sharedComponents SharedComponent[]
+  analytics     Analytics[]
+  collaborations Collaboration[]
+  
+  @@index([email])
+  @@index([provider, providerId])
+}
+
+// Project model for organizing generated components
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  
+  // Owner
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  components  Component[]
+  collaborations Collaboration[]
+  
+  @@index([userId])
+}
+
+// Component model for storing generated UI components
+model Component {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  prompt      String   @db.Text
+  code        String   @db.Text
+  framework   Framework
+  styling     StylingOption
+  typescript  Boolean  @default(true)
+  
+  // Metadata
+  dependencies Json?    // Array of required packages
+  props       Json?    // Component props definition
+  preview     String?  @db.Text // Preview HTML/image
+  
+  // Project relation
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // AI Generation details
+  provider    String
+  model       String
+  tokens      Int
+  generationTime Int   // in milliseconds
+  
+  // Versioning
+  version     Int      @default(1)
+  parentId    String?  // For version history
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  shares      SharedComponent[]
+  templates   Template[]
+  
+  @@index([projectId])
+  @@index([name])
+}
+
+// Template model for reusable component templates
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  tags        String[] // Array of tags
+  
+  // Component details
+  componentId String
+  component   Component @relation(fields: [componentId], references: [id])
+  
+  // Creator
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Marketplace
+  isPublic    Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  price       Float?   // null = free
+  downloads   Int      @default(0)
+  likes       Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([category])
+  @@index([userId])
+  @@index([isPublic, isFeatured])
+}
+
+// Shared component model for collaboration
+model SharedComponent {
+  id          String   @id @default(cuid())
+  shareId     String   @unique // Public share ID
+  
+  // Component
+  componentId String
+  component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  
+  // Owner
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Share settings
+  isPublic    Boolean  @default(true)
+  expiresAt   DateTime?
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([shareId])
+  @@index([userId])
+}
+
+// Collaboration model for team projects
+model Collaboration {
+  id          String   @id @default(cuid())
+  
+  // Project
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Collaborator
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Permissions
+  role        CollaboratorRole @default(VIEWER)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  acceptedAt  DateTime?
+  
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+// Analytics model for tracking usage
+model Analytics {
+  id          String   @id @default(cuid())
+  
+  // User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Event details
+  event       AnalyticsEvent
+  metadata    Json?    // Additional event data
+  
+  // Request details
+  ip          String?
+  userAgent   String?
+  referrer    String?
+  
+  // Timestamp
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, event])
+  @@index([createdAt])
+}
+
+// Enums
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  MICROSOFT
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Framework {
+  REACT
+  VUE
+  ANGULAR
+  SVELTE
+  SOLID
+  QWIK
+}
+
+enum StylingOption {
+  TAILWIND
+  CSS
+  SCSS
+  STYLED_COMPONENTS
+  EMOTION
+  CSS_MODULES
+}
+
+enum CollaboratorRole {
+  VIEWER
+  EDITOR
+  ADMIN
+}
+
+enum AnalyticsEvent {
+  COMPONENT_GENERATED
+  COMPONENT_EXPORTED
+  COMPONENT_SHARED
+  TEMPLATE_CREATED
+  TEMPLATE_USED
+  PROJECT_CREATED
+  API_CALL
+  SUBSCRIPTION_UPGRADED
+}
