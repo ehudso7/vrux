@@ -26,10 +26,10 @@ async function generateUIHandler(
     const userId = req.user!.id;
     
     // Check rate limit
-    const rateLimitResult = await rateLimiter.check(res, 10, userId);
-    if (!rateLimitResult) {
+    if (!rateLimiter.isAllowed(userId)) {
       return res.status(429).json({ 
-        error: 'Too many requests. Please try again later.' 
+        error: 'Too many requests. Please try again later.',
+        retryAfter: rateLimiter.getResetTime(userId)
       });
     }
 
@@ -108,12 +108,8 @@ async function generateUIHandler(
     }
 
     const startTime = Date.now();
-    const result = await provider.generateUI({
-      prompt,
-      framework,
-      styling,
-      typescript
-    });
+    const systemPrompt = `Generate a ${framework} component using ${styling} styling${typescript ? ' with TypeScript' : ''}. Return only the component code.`;
+    const result = await provider.generateComponent(prompt, systemPrompt);
 
     const generationTime = Date.now() - startTime;
 
@@ -135,13 +131,17 @@ async function generateUIHandler(
       });
     }
 
+    // Extract component name from code
+    const componentNameMatch = result.content.match(/(?:export\s+default\s+)?(?:function|const|class)\s+(\w+)/);
+    const componentName = componentNameMatch ? componentNameMatch[1] : 'GeneratedComponent';
+
     // Save component to database
     const component = await prisma.component.create({
       data: {
-        name: result.componentName || 'GeneratedComponent',
+        name: componentName,
         description: `Generated from: ${prompt.substring(0, 100)}...`,
         prompt,
-        code: result.code,
+        code: result.content,
         framework: framework.toUpperCase() as Framework,
         styling: styling.toUpperCase() as StylingOption,
         typescript,
@@ -150,7 +150,7 @@ async function generateUIHandler(
         model: result.metrics?.model || 'unknown',
         tokens: result.metrics?.totalTokens || 0,
         generationTime,
-        dependencies: result.dependencies || [],
+        dependencies: [],
       }
     });
 
@@ -187,9 +187,9 @@ async function generateUIHandler(
 
     res.status(200).json({
       id: component.id,
-      code: result.code,
-      componentName: result.componentName,
-      dependencies: result.dependencies,
+      code: result.content,
+      componentName: componentName,
+      dependencies: [],
       projectId: project.id,
       metrics: {
         ...result.metrics,
