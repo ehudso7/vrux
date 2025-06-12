@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
 import '../globals.css';
+import '../styles/index.css';
 import PageLoading from '../components/page-loading';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../lib/auth-context';
